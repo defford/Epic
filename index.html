@@ -1,0 +1,3784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Energy Strategy Board</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; }
+        
+        /* Actions Panel - Shows when unit is selected */
+        #actions-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: rgba(20, 20, 30, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #444;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+            z-index: 10;
+            display: none;
+        }
+
+        h2 { margin-top: 0; font-size: 18px; color: #4db8ff; border-bottom: 1px solid #555; padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: #2980b9;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        .btn:hover { background: #3498db; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { background: #34495e; color: #7f8c8d; cursor: not-allowed; transform: none; }
+        
+        .btn-pass { background: #e67e22; }
+        .btn-pass:hover { background: #d35400; }
+
+        .energy-input-container {
+            margin-top: 10px;
+            display: none;
+        }
+        .energy-input-container label {
+            display: block;
+            font-size: 12px;
+            color: #bdc3c7;
+            margin-bottom: 5px;
+        }
+        .energy-input-container input {
+            width: 100%;
+            padding: 8px;
+            background: #34495e;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .energy-input-container input:focus {
+            outline: none;
+            border-color: #4db8ff;
+        }
+        .energy-source-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(52, 73, 94, 0.5);
+            border-radius: 4px;
+            border: 1px solid #555;
+        }
+        .energy-source-item label {
+            display: block;
+            font-size: 11px;
+            color: #bdc3c7;
+            margin-bottom: 3px;
+        }
+        .energy-source-item .source-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #95a5a6;
+            margin-bottom: 5px;
+        }
+        .energy-source-item input {
+            width: 100%;
+            padding: 6px;
+            background: #34495e;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+
+        /* Turn Indicator */
+        #turn-indicator {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 30px;
+            font-size: 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            border: 1px solid #444;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            z-index: 10;
+        }
+
+        /* End Turn Button - Bubble button next to turn indicator */
+        #btn-end-turn {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(calc(-50% + 180px));
+            width: auto;
+            min-width: 80px;
+            padding: 10px 20px;
+            margin-top: 0;
+            background: #e67e22;
+            border: none;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 10;
+            white-space: nowrap;
+        }
+        #btn-end-turn:hover { 
+            background: #d35400; 
+            transform: translateX(calc(-50% + 180px)) translateY(-1px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+        }
+        #btn-end-turn:active { 
+            transform: translateX(calc(-50% + 180px)) translateY(0);
+        }
+        #btn-end-turn:disabled { 
+            background: #34495e; 
+            color: #7f8c8d; 
+            cursor: not-allowed; 
+            transform: translateX(calc(-50% + 180px));
+        }
+
+        /* Floating Unit Popup */
+        #unit-popup {
+            position: absolute;
+            display: none;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #4db8ff;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 100;
+            box-shadow: 0 0 15px rgba(77, 184, 255, 0.3);
+            margin-top: -15px; /* Offset slightly up */
+        }
+        #unit-popup .popup-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px solid #555;
+            margin-bottom: 5px;
+            padding-bottom: 3px;
+            color: #4db8ff;
+        }
+        #unit-popup .popup-row {
+            display: flex;
+            justify-content: space-between;
+            min-width: 120px;
+            margin-bottom: 2px;
+        }
+        #unit-popup .enemy {
+            border-color: #e74c3c;
+        }
+        #unit-popup .enemy .popup-title {
+            color: #e74c3c;
+        }
+
+        /* Modal Overlay */
+        #modal-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #modal-box {
+            background: #2c3e50;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            border: 2px solid #4db8ff;
+            box-shadow: 0 0 30px rgba(77, 184, 255, 0.3);
+        }
+        #modal-title { font-size: 32px; margin-bottom: 20px; font-weight: bold; }
+        #modal-msg { font-size: 18px; margin-bottom: 30px; color: #bdc3c7; }
+        #btn-restart { background: #27ae60; }
+        #btn-restart:hover { background: #2ecc71; }
+
+        /* Lobby Screen */
+        #lobby-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #lobby-box {
+            background: #2c3e50;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            border: 2px solid #4db8ff;
+            box-shadow: 0 0 30px rgba(77, 184, 255, 0.3);
+            min-width: 400px;
+        }
+        #lobby-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #4db8ff;
+        }
+        .lobby-section {
+            margin: 20px 0;
+        }
+        .lobby-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #34495e;
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+        .lobby-input:focus {
+            outline: none;
+            border-color: #4db8ff;
+        }
+        .lobby-status {
+            margin: 15px 0;
+            font-size: 14px;
+            color: #bdc3c7;
+        }
+        .copy-link {
+            cursor: pointer;
+            color: #4db8ff;
+            text-decoration: underline;
+        }
+        .copy-link:hover {
+            color: #3498db;
+        }
+    </style>
+    <!-- Import Three.js via CDN -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <!-- Socket.io Client -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <!-- Lobby Screen -->
+    <div id="lobby-overlay">
+        <div id="lobby-box">
+            <div id="lobby-title">Epic Strategy Game</div>
+            <div id="lobby-content">
+                <div class="lobby-section">
+                    <button id="btn-create-room" class="btn">Create Room</button>
+                </div>
+                <div class="lobby-section" style="display: none;" id="room-section">
+                    <div class="lobby-status">Room Code:</div>
+                    <input type="text" id="room-code-display" class="lobby-input" readonly />
+                    <div class="lobby-status">
+                        Share this link: <span id="share-link" class="copy-link">Click to copy</span>
+                    </div>
+                    <div class="lobby-status" id="room-status">Waiting for players...</div>
+                </div>
+                <div class="lobby-section" style="display: none;" id="join-section">
+                    <div class="lobby-status">Enter Room Code:</div>
+                    <input type="text" id="room-code-input" class="lobby-input" placeholder="ROOM CODE" maxlength="6" />
+                    <button id="btn-join-room" class="btn">Join Room</button>
+                </div>
+                <div class="lobby-section">
+                    <button id="btn-join-existing" class="btn" style="background: #27ae60;">Join Existing Room</button>
+                </div>
+                <div class="lobby-section" id="ai-section">
+                    <div class="lobby-status" style="margin-bottom: 15px;">Play vs AI:</div>
+                    <select id="ai-difficulty" class="lobby-input" style="margin-bottom: 10px;">
+                        <option value="easy">Easy (Aggressive)</option>
+                        <option value="medium" selected>Medium (Balanced)</option>
+                        <option value="hard">Hard (Conservative)</option>
+                    </select>
+                    <button id="btn-play-ai" class="btn" style="background: #9b59b6;">Play vs AI</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="turn-indicator">Player 1 Turn</div>
+    
+    <!-- Floating Popup Element -->
+    <div id="unit-popup">
+        <div class="popup-title">Unit Name</div>
+        <div class="popup-content">Stats here</div>
+    </div>
+
+    <!-- Actions Panel - Shows when unit is selected -->
+    <div id="actions-panel">
+        <h2>Actions</h2>
+        <div id="controls-container">
+            <button id="btn-build" class="btn" disabled>Build Spire (3 Energy)</button>
+            <button id="btn-build-wall-1x1" class="btn" disabled>Build 1x1 Wall (1 Energy)</button>
+            <button id="btn-build-wall-1x2" class="btn" disabled>Build 1x2 Wall (2 Energy)</button>
+            <button id="btn-receive-energy" class="btn" disabled>Receive Energy</button>
+            <div id="receive-energy-container" class="energy-input-container">
+                <div id="receive-energy-sources"></div>
+                <button id="btn-confirm-receive-energy" class="btn" style="margin-top: 10px;">Confirm</button>
+            </div>
+            <div id="transfer-energy-container" class="energy-input-container">
+                <label for="energy-transfer-amount">Amount to Transfer:</label>
+                <input type="number" id="energy-transfer-amount" min="1" value="1" />
+            </div>
+            <button id="btn-transfer-energy" class="btn" disabled>Transfer Energy to Hero</button>
+        </div>
+    </div>
+
+    <!-- End Turn Button - Bubble button next to turn indicator -->
+    <button id="btn-end-turn">End Turn</button>
+
+    <!-- Game Over Modal -->
+    <div id="modal-overlay">
+        <div id="modal-box">
+            <div id="modal-title">GAME OVER</div>
+            <div id="modal-msg"></div>
+            <button id="btn-restart" class="btn">Play Again</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // --- Configuration ---
+        const BOARD_SIZE = 5;
+        const TILE_SIZE = 10;
+        const COLORS = {
+            p1: 0x3498db,     // Blue (Human)
+            p1Light: 0x5dade2,
+            p2: 0xe74c3c,     // Red (AI)
+            p2Light: 0xec7063,
+            select: 0xf1c40f, // Yellow
+            ground1: 0x2c3e50,
+            ground2: 0x34495e,
+            spire: 0x2ecc71,
+            spireStructure: 0x27ae60
+        };
+
+        // --- Game State ---
+        let scene, camera, renderer, labelRenderer, controls, raycaster, mouse;
+        let gridMeshes = []; 
+        let units = [];
+        let spires = [];
+        let walls = []; // Walls are now stored as edges: {x, z, direction, size, owner}
+        let edgeHighlightMeshes = []; // Visual highlights for edges
+        let highlightMesh;
+        let hoverEdgeHighlight = null; // Hover highlight for wall placement (can be a group for 1x2 walls)
+        let hoverEdgeHighlights = []; // Array of hover highlight meshes (for 1x2 walls)
+        
+        let selectedUnit = null;
+        let selectedSpire = null;
+        let currentPlayer = 1; // 1 or 2 for 2-player mode
+        let myPlayerNumber = null; // Assigned by server
+        let isGameOver = false;
+        let buildMode = false;
+        let buildModeHero = null;
+        let wallBuildMode = false;
+        let wallBuildHero = null;
+        let wallBuildSize = 1; // 1 for 1x1, 2 for 1x2
+        let wallBuildTile2 = null; // For 1x2 walls: {x, z} of second tile for straight walls
+        let socket = null;
+        let roomCode = null;
+        let isMultiplayer = false;
+        let isPlayingAI = false;
+        let aiDifficulty = 'medium'; // 'easy', 'medium', 'hard'
+        
+        // Initial setup data - one player at top edge, one at bottom edge
+        // Board is 5x5 (0-4), units placed left-to-right: hero, spire, transport
+        const P1_START = { x: 1, y: 0 }; // Top edge of board, hero position
+        const P2_START = { x: 1, y: 4 }; // Bottom edge of board, hero position
+        const BASE_UNIT_Y = 4; // Base Y position for all units (heroes and transports)
+
+        // --- Socket.io Multiplayer Setup ---
+        function initMultiplayer() {
+            socket = io();
+            
+            socket.on('connect_error', (error) => {
+                console.error('Connection error:', error);
+            });
+            
+            socket.on('roomCreated', (data) => {
+                roomCode = data.roomCode;
+                myPlayerNumber = data.playerNumber;
+                document.getElementById('room-code-display').value = roomCode;
+                document.getElementById('room-section').style.display = 'block';
+                document.getElementById('btn-create-room').style.display = 'none';
+                document.getElementById('btn-join-existing').style.display = 'none';
+                updateShareLink();
+            });
+            
+            socket.on('roomJoined', (data) => {
+                roomCode = data.roomCode;
+                myPlayerNumber = data.playerNumber;
+                document.getElementById('room-section').style.display = 'block';
+                document.getElementById('join-section').style.display = 'none';
+                document.getElementById('room-code-display').value = roomCode;
+                updateShareLink();
+            });
+            
+            socket.on('roomUpdate', (data) => {
+                const statusEl = document.getElementById('room-status');
+                if (data.players === 1) {
+                    statusEl.textContent = 'Waiting for another player...';
+                } else if (data.players === 2) {
+                    statusEl.textContent = `Both players connected! Player ${myPlayerNumber === 1 ? '1' : '2'}. Click Ready when ready to start.`;
+                    if (!document.getElementById('btn-ready')) {
+                        const readyBtn = document.createElement('button');
+                        readyBtn.id = 'btn-ready';
+                        readyBtn.className = 'btn';
+                        readyBtn.textContent = 'Ready';
+                        readyBtn.onclick = () => {
+                            socket.emit('playerReady');
+                            readyBtn.disabled = true;
+                            readyBtn.textContent = 'Waiting for other player...';
+                        };
+                        document.getElementById('room-section').appendChild(readyBtn);
+                    }
+                }
+            });
+            
+            socket.on('gameStart', (data) => {
+                document.getElementById('lobby-overlay').style.display = 'none';
+                isMultiplayer = true;
+                currentPlayer = myPlayerNumber;
+                init();
+                animate();
+            });
+            
+            socket.on('gameAction', (data) => {
+                // Only process actions from other players (not our own)
+                if (data.playerNumber && data.playerNumber !== myPlayerNumber) {
+                    handleRemoteAction(data);
+                } else if (!data.playerNumber) {
+                    handleRemoteAction(data);
+                }
+            });
+            
+            socket.on('gameStateUpdate', (data) => {
+                syncGameState(data);
+            });
+            
+            socket.on('error', (data) => {
+                alert(data.message);
+            });
+        }
+        
+        function updateShareLink() {
+            const shareLink = document.getElementById('share-link');
+            const url = window.location.href.split('?')[0] + '?room=' + roomCode;
+            shareLink.textContent = url;
+            shareLink.onclick = () => {
+                navigator.clipboard.writeText(url).then(() => {
+                    shareLink.textContent = 'Copied!';
+                    setTimeout(() => {
+                        shareLink.textContent = url;
+                    }, 2000);
+                });
+            };
+        }
+        
+        function handleRemoteAction(data) {
+            if (!data.action) return;
+            
+            if (data.action === 'turnChange') {
+                currentPlayer = data.currentPlayer;
+                document.getElementById('turn-indicator').innerText = `Player ${currentPlayer} Turn`;
+                document.getElementById('turn-indicator').style.color = currentPlayer === 1 ? "white" : "#e74c3c";
+                deselect();
+                updateUI();
+            } else if (data.action === 'move') {
+                let unit = units.find(u => u.id === data.unitId);
+                
+                // Fallback: find by owner, type, and position if ID doesn't match
+                if (!unit && data.owner && data.unitType) {
+                    unit = units.find(u => 
+                        u.owner === data.owner && 
+                        u.type === data.unitType &&
+                        u.x === data.oldX && 
+                        u.z === data.oldZ
+                    );
+                }
+                
+                if (unit) {
+                    unit.energy = data.energy;
+                    unit.hasMoved = data.hasMoved;
+                    updateEnergyLabel(unit);
+                    animateMove(unit, data.x, data.z);
+                    if (selectedUnit && selectedUnit.id === unit.id) {
+                        updateUI();
+                    }
+                }
+            } else if (data.action === 'buildSpire') {
+                spawnSpire(data.owner, data.x, data.z);
+                updateUI();
+            } else if (data.action === 'buildWall') {
+                spawnWall(data.owner, data.x, data.z, data.direction, data.size, data.direction2);
+                updateUI();
+            } else if (data.action === 'receiveEnergy') {
+                const unit = units.find(u => u.id === data.unitId);
+                if (unit) {
+                    unit.energy = data.energy;
+                    unit.hasMoved = data.hasMoved;
+                    updateEnergyLabel(unit);
+                    if (data.spireUpdates) {
+                        data.spireUpdates.forEach(update => {
+                            const spire = spires.find(s => s.x === update.x && s.z === update.z);
+                            if (spire) {
+                                spire.storedEnergy = update.storedEnergy;
+                            }
+                        });
+                    }
+                    if (selectedUnit && selectedUnit.id === unit.id) {
+                        updateUI();
+                    }
+                }
+            } else if (data.action === 'transferEnergy') {
+                const unit = units.find(u => u.id === data.unitId);
+                const hero = units.find(u => u.id === data.heroId);
+                if (unit && hero) {
+                    unit.energy = data.unitEnergy;
+                    hero.energy = data.heroEnergy;
+                    unit.hasMoved = data.hasMoved;
+                    updateEnergyLabel(unit);
+                    updateEnergyLabel(hero);
+                    updateUI();
+                }
+            }
+        }
+        
+        function syncGameState(data) {
+            // Sync game state from remote player
+            if (data.units) {
+                data.units.forEach(unitData => {
+                    const unit = units.find(u => u.id === unitData.id);
+                    if (unit) {
+                        unit.x = unitData.x;
+                        unit.z = unitData.z;
+                        unit.energy = unitData.energy;
+                        unit.hasMoved = unitData.hasMoved;
+                        unit.mesh.position.x = unitData.x * TILE_SIZE + TILE_SIZE/2;
+                        unit.mesh.position.z = unitData.z * TILE_SIZE + TILE_SIZE/2;
+                        updateEnergyLabel(unit);
+                    }
+                });
+            }
+            if (data.spires) {
+                data.spires.forEach(spireData => {
+                    const spire = spires.find(s => s.x === spireData.x && s.z === spireData.z);
+                    if (spire) {
+                        spire.storedEnergy = spireData.storedEnergy;
+                    }
+                });
+            }
+        }
+        
+        function sendGameAction(action, data) {
+            if (socket && isMultiplayer) {
+                socket.emit('gameAction', {
+                    action: action,
+                    ...data
+                });
+            }
+        }
+        
+        // Check if joining via room code
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomParam = urlParams.get('room');
+        
+        // --- Initialization ---
+        if (roomParam) {
+            // Joining existing room
+            initMultiplayer();
+            setTimeout(() => {
+                document.getElementById('join-section').style.display = 'block';
+                document.getElementById('btn-create-room').style.display = 'none';
+                document.getElementById('btn-join-existing').style.display = 'none';
+                document.getElementById('room-code-input').value = roomParam.toUpperCase();
+                socket.emit('joinRoom', { roomCode: roomParam.toUpperCase() });
+            }, 100);
+        } else {
+            // Lobby setup
+            initMultiplayer();
+            document.getElementById('btn-create-room').addEventListener('click', () => {
+                socket.emit('createRoom');
+            });
+            document.getElementById('btn-join-existing').addEventListener('click', () => {
+                document.getElementById('join-section').style.display = 'block';
+                document.getElementById('btn-create-room').style.display = 'none';
+                document.getElementById('btn-join-existing').style.display = 'none';
+            });
+            document.getElementById('btn-join-room').addEventListener('click', () => {
+                const code = document.getElementById('room-code-input').value.toUpperCase();
+                if (code.length === 6) {
+                    socket.emit('joinRoom', { roomCode: code });
+                } else {
+                    alert('Please enter a valid 6-character room code');
+                }
+            });
+            
+            // Wire up AI play button
+            document.getElementById('btn-play-ai').addEventListener('click', () => {
+                aiDifficulty = document.getElementById('ai-difficulty').value;
+                startAIGame();
+            });
+        }
+        
+        // For local play (no multiplayer)
+        function startLocalGame() {
+            document.getElementById('lobby-overlay').style.display = 'none';
+            isMultiplayer = false;
+            isPlayingAI = false;
+            init();
+            animate();
+        }
+        
+        // Start AI game
+        function startAIGame() {
+            document.getElementById('lobby-overlay').style.display = 'none';
+            isMultiplayer = false;
+            isPlayingAI = true;
+            myPlayerNumber = 1; // Human is always player 1
+            currentPlayer = 1;
+            init();
+            animate();
+        }
+        
+        // Allow local play as fallback
+        if (!roomParam) {
+            // Add local play option
+            setTimeout(() => {
+                const localBtn = document.createElement('button');
+                localBtn.className = 'btn';
+                localBtn.style.background = '#95a5a6';
+                localBtn.textContent = 'Play Locally (2 Players)';
+                localBtn.onclick = startLocalGame;
+                document.getElementById('lobby-content').appendChild(localBtn);
+            }, 100);
+        }
+
+        function init() {
+            // Scene Setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a1a);
+            scene.fog = new THREE.Fog(0x1a1a1a, 50, 300);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+            // Center camera on board (board center calculated from BOARD_SIZE)
+            const boardCenter = (BOARD_SIZE * TILE_SIZE) / 2;
+            camera.position.set(boardCenter, 40, boardCenter + 30); 
+            camera.lookAt(boardCenter, 0, boardCenter);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+            // CSS2D Label Renderer for energy labels
+            labelRenderer = new CSS2DRenderer();
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.domElement.style.position = 'absolute';
+            labelRenderer.domElement.style.top = '0';
+            labelRenderer.domElement.style.pointerEvents = 'none';
+            document.body.appendChild(labelRenderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight.position.set(20, 100, 50);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+
+            // Controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.target.set(boardCenter, 0, boardCenter);
+            controls.maxPolarAngle = Math.PI / 2 - 0.1; // Prevent going under board
+            controls.update();
+
+            // Raycaster
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Helpers
+            createBoard();
+            createHighlightMarker();
+            createUnits();
+            
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('pointerdown', onMouseClick);
+            window.addEventListener('pointermove', onMouseMove);
+            window.addEventListener('pointerleave', () => clearHoverEdgeHighlight());
+            document.getElementById('btn-end-turn').addEventListener('click', () => {
+                // Only allow manual pass if it's player 1's turn in AI mode
+                if (isPlayingAI && currentPlayer !== 1) {
+                    return;
+                }
+                passTurn();
+            });
+            document.getElementById('btn-build').addEventListener('click', buildSpire);
+            document.getElementById('btn-build-wall-1x1').addEventListener('click', () => buildWall(1));
+            document.getElementById('btn-build-wall-1x2').addEventListener('click', () => buildWall(2));
+            document.getElementById('btn-receive-energy').addEventListener('click', showReceiveEnergyUI);
+            document.getElementById('btn-confirm-receive-energy').addEventListener('click', confirmReceiveEnergy);
+            document.getElementById('btn-transfer-energy').addEventListener('click', transferEnergyToHero);
+            document.getElementById('btn-restart').addEventListener('click', () => location.reload());
+        }
+
+        function createBoard() {
+            const geometry = new THREE.PlaneGeometry(TILE_SIZE, TILE_SIZE);
+            geometry.rotateX(-Math.PI / 2);
+
+            for (let x = 0; x < BOARD_SIZE; x++) {
+                gridMeshes[x] = [];
+                for (let z = 0; z < BOARD_SIZE; z++) {
+                    const isEven = (x + z) % 2 === 0;
+                    const material = new THREE.MeshStandardMaterial({ 
+                        color: isEven ? COLORS.ground1 : COLORS.ground2,
+                        roughness: 0.8
+                    });
+                    const tile = new THREE.Mesh(geometry, material);
+                    tile.position.set(x * TILE_SIZE + TILE_SIZE/2, 0, z * TILE_SIZE + TILE_SIZE/2);
+                    tile.userData = { x: x, z: z, type: 'tile' };
+                    tile.receiveShadow = true;
+                    scene.add(tile);
+                    gridMeshes[x][z] = tile;
+                }
+            }
+            
+            // Board border
+            const borderGeo = new THREE.BoxGeometry(BOARD_SIZE * TILE_SIZE + 2, 2, BOARD_SIZE * TILE_SIZE + 2);
+            const borderMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+            const border = new THREE.Mesh(borderGeo, borderMat);
+            border.position.set(BOARD_SIZE * TILE_SIZE / 2, -1.1, BOARD_SIZE * TILE_SIZE / 2);
+            scene.add(border);
+        }
+
+        function createHighlightMarker() {
+            const geometry = new THREE.RingGeometry(0.5, 4, 32);
+            geometry.rotateX(-Math.PI / 2);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: COLORS.select, 
+                transparent: true, 
+                opacity: 0.5,
+                side: THREE.DoubleSide 
+            });
+            highlightMesh = new THREE.Mesh(geometry, material);
+            highlightMesh.position.y = 0.5;
+            highlightMesh.visible = false;
+            scene.add(highlightMesh);
+        }
+
+        function createEdgeHighlight(x, z, direction) {
+            // direction: 'n' (north), 's' (south), 'e' (east), 'w' (west)
+            const geometry = new THREE.BoxGeometry(
+                direction === 'n' || direction === 's' ? TILE_SIZE : 0.3,
+                0.2,
+                direction === 'e' || direction === 'w' ? TILE_SIZE : 0.3
+            );
+            const material = new THREE.MeshBasicMaterial({ 
+                color: COLORS.select, 
+                transparent: true, 
+                opacity: 0.7
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            // Position at edge
+            let posX = x * TILE_SIZE + TILE_SIZE/2;
+            let posZ = z * TILE_SIZE + TILE_SIZE/2;
+            
+            if (direction === 'n') {
+                posZ = z * TILE_SIZE; // North edge
+            } else if (direction === 's') {
+                posZ = (z + 1) * TILE_SIZE; // South edge
+            } else if (direction === 'e') {
+                posX = (x + 1) * TILE_SIZE; // East edge
+            } else if (direction === 'w') {
+                posX = x * TILE_SIZE; // West edge
+            }
+            
+            mesh.position.set(posX, 0.3, posZ);
+            mesh.userData = { type: 'edge', x: x, z: z, direction: direction };
+            return mesh;
+        }
+
+        function createHoverEdgeHighlight(x, z, direction) {
+            // Create a brighter, more prominent highlight for hover
+            const geometry = new THREE.BoxGeometry(
+                direction === 'n' || direction === 's' ? TILE_SIZE : 0.4,
+                0.25,
+                direction === 'e' || direction === 'w' ? TILE_SIZE : 0.4
+            );
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x00ff00, // Bright green for hover
+                transparent: true, 
+                opacity: 0.9
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            // Position at edge
+            let posX = x * TILE_SIZE + TILE_SIZE/2;
+            let posZ = z * TILE_SIZE + TILE_SIZE/2;
+            
+            if (direction === 'n') {
+                posZ = z * TILE_SIZE; // North edge
+            } else if (direction === 's') {
+                posZ = (z + 1) * TILE_SIZE; // South edge
+            } else if (direction === 'e') {
+                posX = (x + 1) * TILE_SIZE; // East edge
+            } else if (direction === 'w') {
+                posX = x * TILE_SIZE; // West edge
+            }
+            
+            mesh.position.set(posX, 0.35, posZ);
+            mesh.userData = { type: 'hoverEdge', x: x, z: z, direction: direction };
+            return mesh;
+        }
+
+        function clearHoverEdgeHighlight() {
+            // Clear single highlight
+            if (hoverEdgeHighlight) {
+                if (hoverEdgeHighlight.isGroup) {
+                    // If it's a group, remove all children
+                    hoverEdgeHighlight.children.forEach(child => {
+                        child.geometry.dispose();
+                        child.material.dispose();
+                    });
+                    scene.remove(hoverEdgeHighlight);
+                } else {
+                    hoverEdgeHighlight.geometry.dispose();
+                    hoverEdgeHighlight.material.dispose();
+                    scene.remove(hoverEdgeHighlight);
+                }
+                hoverEdgeHighlight = null;
+            }
+            // Clear array of highlights
+            hoverEdgeHighlights.forEach(mesh => {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            });
+            hoverEdgeHighlights = [];
+        }
+
+        function clearEdgeHighlights() {
+            edgeHighlightMeshes.forEach(mesh => {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                mesh.material.dispose();
+            });
+            edgeHighlightMeshes = [];
+            clearHoverEdgeHighlight();
+        }
+
+        function getEdgeFromWorldPosition(worldX, worldZ) {
+            // Tiles are positioned at: x * TILE_SIZE + TILE_SIZE/2
+            // Edges are at: 
+            //   North: z * TILE_SIZE
+            //   South: (z + 1) * TILE_SIZE
+            //   West: x * TILE_SIZE
+            //   East: (x + 1) * TILE_SIZE
+            
+            // Find which tile this point is in
+            // Tile centers are at: x * TILE_SIZE + TILE_SIZE/2
+            // So tile index = floor((worldX - TILE_SIZE/2) / TILE_SIZE) + 1
+            // Or simpler: tile index = floor(worldX / TILE_SIZE)
+            let tileX = Math.floor(worldX / TILE_SIZE);
+            let tileZ = Math.floor(worldZ / TILE_SIZE);
+            
+            // Clamp to valid board coordinates
+            tileX = Math.max(0, Math.min(BOARD_SIZE - 1, tileX));
+            tileZ = Math.max(0, Math.min(BOARD_SIZE - 1, tileZ));
+            
+            // Calculate distances to all four edges of the current tile
+            const northEdgeZ = tileZ * TILE_SIZE;
+            const southEdgeZ = (tileZ + 1) * TILE_SIZE;
+            const westEdgeX = tileX * TILE_SIZE;
+            const eastEdgeX = (tileX + 1) * TILE_SIZE;
+            
+            // Calculate distances to all edges we need to check
+            const edges = [];
+            
+            // Edges of current tile
+            edges.push({ dist: Math.abs(worldZ - northEdgeZ), dir: 'n', x: tileX, z: tileZ, edgeX: westEdgeX, edgeZ: northEdgeZ });
+            edges.push({ dist: Math.abs(worldZ - southEdgeZ), dir: 's', x: tileX, z: tileZ, edgeX: westEdgeX, edgeZ: southEdgeZ });
+            edges.push({ dist: Math.abs(worldX - westEdgeX), dir: 'w', x: tileX, z: tileZ, edgeX: westEdgeX, edgeZ: northEdgeZ });
+            edges.push({ dist: Math.abs(worldX - eastEdgeX), dir: 'e', x: tileX, z: tileZ, edgeX: eastEdgeX, edgeZ: northEdgeZ });
+            
+            // Edges on adjacent tiles (for boundaries between tiles)
+            if (tileX > 0) {
+                const adjWestEdgeX = tileX * TILE_SIZE;
+                edges.push({ dist: Math.abs(worldX - adjWestEdgeX), dir: 'w', x: tileX - 1, z: tileZ, edgeX: adjWestEdgeX, edgeZ: tileZ * TILE_SIZE });
+            }
+            if (tileX < BOARD_SIZE - 1) {
+                const adjEastEdgeX = (tileX + 1) * TILE_SIZE;
+                edges.push({ dist: Math.abs(worldX - adjEastEdgeX), dir: 'e', x: tileX, z: tileZ, edgeX: adjEastEdgeX, edgeZ: tileZ * TILE_SIZE });
+            }
+            if (tileZ > 0) {
+                const adjNorthEdgeZ = tileZ * TILE_SIZE;
+                edges.push({ dist: Math.abs(worldZ - adjNorthEdgeZ), dir: 'n', x: tileX, z: tileZ - 1, edgeX: tileX * TILE_SIZE, edgeZ: adjNorthEdgeZ });
+            }
+            if (tileZ < BOARD_SIZE - 1) {
+                const adjSouthEdgeZ = (tileZ + 1) * TILE_SIZE;
+                edges.push({ dist: Math.abs(worldZ - adjSouthEdgeZ), dir: 's', x: tileX, z: tileZ, edgeX: tileX * TILE_SIZE, edgeZ: adjSouthEdgeZ });
+            }
+            
+            // Find the closest edge
+            const closest = edges.reduce((min, curr) => curr.dist < min.dist ? curr : min);
+            
+            // Edge proximity threshold - only detect edge if cursor is close enough
+            const EDGE_THRESHOLD = TILE_SIZE * 0.3; // 30% of tile size (3 units)
+            if (closest.dist > EDGE_THRESHOLD) {
+                return null; // Not close enough to any edge
+            }
+            
+            // For 1x2 walls, determine which half of the edge
+            let half = null;
+            if (closest.dir === 'n' || closest.dir === 's') {
+                // Horizontal edge - check which half based on X position along the edge
+                // Edge runs from closest.x * TILE_SIZE to (closest.x + 1) * TILE_SIZE
+                const edgeStartX = closest.x * TILE_SIZE;
+                const edgeEndX = (closest.x + 1) * TILE_SIZE;
+                const edgeCenterX = (edgeStartX + edgeEndX) / 2;
+                half = worldX < edgeCenterX ? 'left' : 'right';
+            } else {
+                // Vertical edge - check which half based on Z position along the edge
+                // Edge runs from closest.z * TILE_SIZE to (closest.z + 1) * TILE_SIZE
+                const edgeStartZ = closest.z * TILE_SIZE;
+                const edgeEndZ = (closest.z + 1) * TILE_SIZE;
+                const edgeCenterZ = (edgeStartZ + edgeEndZ) / 2;
+                half = worldZ < edgeCenterZ ? 'top' : 'bottom';
+            }
+            
+            return { x: closest.x, z: closest.z, direction: closest.dir, half: half };
+        }
+
+        function createUnits() {
+            // Player 1 (Human) - Top of board, left to right: hero, spire, transport
+            spawnUnit('hero', 1, P1_START.x, P1_START.y);
+            spawnSpire(1, P1_START.x + 1, P1_START.y);
+            spawnUnit('transport', 1, P1_START.x + 2, P1_START.y);
+
+            // Player 2 (AI) - Bottom of board, left to right: hero, spire, transport
+            spawnUnit('hero', 2, P2_START.x, P2_START.y);
+            spawnSpire(2, P2_START.x + 1, P2_START.y);
+            spawnUnit('transport', 2, P2_START.x + 2, P2_START.y);
+        }
+
+        function createEnergyLabel(unit) {
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'energy-label';
+            labelDiv.textContent = unit.energy;
+            labelDiv.style.color = unit.owner === 1 ? '#3498db' : '#e74c3c';
+            labelDiv.style.fontSize = '20px';
+            labelDiv.style.fontWeight = 'bold';
+            labelDiv.style.textAlign = 'center';
+            labelDiv.style.pointerEvents = 'none';
+            labelDiv.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 2px rgba(255,255,255,0.3)';
+            
+            const label = new CSS2DObject(labelDiv);
+            label.position.set(0, 8, 0); // Position above the unit
+            unit.mesh.add(label);
+            unit.energyLabel = label;
+            return label;
+        }
+
+        function updateEnergyLabel(unit) {
+            if (!unit.energyLabel) {
+                createEnergyLabel(unit);
+            }
+            if (unit.energyLabel && unit.energyLabel.element) {
+                unit.energyLabel.element.textContent = unit.energy;
+            }
+        }
+
+        function spawnUnit(type, owner, x, z) {
+            let mesh, yPos;
+            const color = owner === 1 ? COLORS.p1 : COLORS.p2;
+
+            if (type === 'hero') {
+                const geometry = new THREE.BoxGeometry(5, 8, 5);
+                const material = new THREE.MeshStandardMaterial({ color: color, roughness: 0.2 });
+                mesh = new THREE.Mesh(geometry, material);
+                yPos = BASE_UNIT_Y;
+                
+                const detailGeo = new THREE.BoxGeometry(3, 2, 1);
+                const detailMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+                const detail = new THREE.Mesh(detailGeo, detailMat);
+                detail.position.set(0, 2, 2.5);
+                mesh.add(detail);
+
+            } else {
+                const geometry = new THREE.SphereGeometry(2.5, 32, 32);
+                const material = new THREE.MeshStandardMaterial({ color: color, roughness: 0.2, metalness: 0.5 });
+                mesh = new THREE.Mesh(geometry, material);
+                yPos = BASE_UNIT_Y;
+
+                const ringGeo = new THREE.TorusGeometry(3.5, 0.3, 16, 32);
+                const ringMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                mesh.add(ring);
+            }
+
+            mesh.position.set(x * TILE_SIZE + TILE_SIZE/2, yPos, z * TILE_SIZE + TILE_SIZE/2);
+            mesh.castShadow = true;
+
+            // Generate deterministic ID based on owner, type, and initial position
+            // This ensures both clients have the same IDs for the same units
+            const unitId = `${owner}-${type}-${x}-${z}`;
+            
+            const unit = {
+                id: unitId,
+                type: type,
+                owner: owner,
+                mesh: mesh,
+                x: x,
+                z: z,
+                energy: type === 'hero' ? 3 : 0, // Hero starts with 3, Transport starts with 0
+                hasMoved: false
+            };
+
+            mesh.userData = { isUnit: true, unitRef: unit };
+            scene.add(mesh);
+            units.push(unit);
+            
+            // Create energy label
+            createEnergyLabel(unit);
+            
+            return unit;
+        }
+
+        function spawnSpire(owner, x, z) {
+            const group = new THREE.Group();
+            
+            // Base
+            const baseGeo = new THREE.CylinderGeometry(3, 4, 2, 8);
+            const baseMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+            const base = new THREE.Mesh(baseGeo, baseMat);
+            base.position.y = 1;
+            base.castShadow = true;
+            group.add(base);
+
+            // Crystal
+            const crystalGeo = new THREE.ConeGeometry(2, 10, 6);
+            const crystalMat = new THREE.MeshStandardMaterial({ 
+                color: COLORS.spire, 
+                emissive: COLORS.spire, 
+                emissiveIntensity: 0.5,
+                transparent: true,
+                opacity: 0.9
+            });
+            const crystal = new THREE.Mesh(crystalGeo, crystalMat);
+            crystal.position.y = 7;
+            crystal.castShadow = true;
+            group.add(crystal);
+
+            const ringGeo = new THREE.TorusGeometry(3, 0.2, 8, 16);
+            const ring1 = new THREE.Mesh(ringGeo, crystalMat);
+            ring1.position.y = 6;
+            ring1.rotation.x = Math.PI / 3;
+            group.add(ring1);
+
+            group.position.set(x * TILE_SIZE + TILE_SIZE/2, 0, z * TILE_SIZE + TILE_SIZE/2);
+            
+            const spire = {
+                owner: owner,
+                x: x,
+                z: z,
+                storedEnergy: 1, // Spire starts with 1 energy
+                mesh: group
+            };
+            
+            group.userData = { isSpire: true, spireRef: spire };
+            spires.push(spire);
+            scene.add(group);
+            
+            if(units.length > 0) log(`P${owner} built a Spire at [${x},${z}]`);
+            return spire;
+        }
+
+        function spawnWall(owner, x, z, direction, size, direction2) {
+            // Walls are now on edges
+            // x, z: tile coordinates
+            // direction: 'n', 's', 'e', 'w' - which edge of the tile
+            // size: 1 for 1x1 (one edge), 2 for 1x2 (two edges)
+            // direction2: second edge direction for 1x2 walls (optional)
+            const group = new THREE.Group();
+            const color = owner === 1 ? COLORS.p1 : COLORS.p2;
+            
+            // Create wall material
+            const wallMat = new THREE.MeshStandardMaterial({ 
+                color: color, 
+                roughness: 0.7,
+                metalness: 0.3
+            });
+            
+            if (size === 1) {
+                // 1x1 wall - single edge
+                const isHorizontal = (direction === 'n' || direction === 's');
+                const wallGeo = new THREE.BoxGeometry(
+                    isHorizontal ? TILE_SIZE : 0.5,
+                    3,
+                    isHorizontal ? 0.5 : TILE_SIZE
+                );
+                const wall = new THREE.Mesh(wallGeo, wallMat);
+                wall.position.y = 1.5;
+                wall.castShadow = true;
+                wall.receiveShadow = true;
+                group.add(wall);
+                
+                // Position at edge
+                let posX = x * TILE_SIZE + TILE_SIZE/2;
+                let posZ = z * TILE_SIZE + TILE_SIZE/2;
+                
+                if (direction === 'n') {
+                    posZ = z * TILE_SIZE;
+                } else if (direction === 's') {
+                    posZ = (z + 1) * TILE_SIZE;
+                } else if (direction === 'e') {
+                    posX = (x + 1) * TILE_SIZE;
+                } else if (direction === 'w') {
+                    posX = x * TILE_SIZE;
+                }
+                
+                group.position.set(posX, 0, posZ);
+            } else {
+                // 1x2 wall - spans two edges
+                // Build first edge
+                const isHorizontal1 = (direction === 'n' || direction === 's');
+                const wallGeo1 = new THREE.BoxGeometry(
+                    isHorizontal1 ? TILE_SIZE : 0.5,
+                    3,
+                    isHorizontal1 ? 0.5 : TILE_SIZE
+                );
+                const wall1 = new THREE.Mesh(wallGeo1, wallMat);
+                wall1.position.y = 1.5;
+                wall1.castShadow = true;
+                wall1.receiveShadow = true;
+                group.add(wall1);
+                
+                // Determine if this is a straight wall (parallel edges) or L-shaped (perpendicular)
+                // Straight wall: direction is horizontal (n/s) and direction2 is horizontal offset (e/w)
+                // OR direction is vertical (e/w) and direction2 is vertical offset (n/s)
+                const isStraightWall = (
+                    ((direction === 'n' || direction === 's') && (direction2 === 'e' || direction2 === 'w')) ||
+                    ((direction === 'e' || direction === 'w') && (direction2 === 'n' || direction2 === 's'))
+                );
+                
+                // For straight walls, second edge should be same type as first
+                // For L-shaped walls, second edge is perpendicular
+                const secondEdgeDirection = isStraightWall ? direction : direction2;
+                const isHorizontal2 = (secondEdgeDirection === 'n' || secondEdgeDirection === 's');
+                
+                // Build second edge
+                const wallGeo2 = new THREE.BoxGeometry(
+                    isHorizontal2 ? TILE_SIZE : 0.5,
+                    3,
+                    isHorizontal2 ? 0.5 : TILE_SIZE
+                );
+                const wall2 = new THREE.Mesh(wallGeo2, wallMat);
+                wall2.position.y = 1.5;
+                wall2.castShadow = true;
+                wall2.receiveShadow = true;
+                group.add(wall2);
+                
+                // Position first edge
+                let posX1 = x * TILE_SIZE + TILE_SIZE/2;
+                let posZ1 = z * TILE_SIZE + TILE_SIZE/2;
+                
+                if (direction === 'n') {
+                    posZ1 = z * TILE_SIZE;
+                } else if (direction === 's') {
+                    posZ1 = (z + 1) * TILE_SIZE;
+                } else if (direction === 'e') {
+                    posX1 = (x + 1) * TILE_SIZE;
+                } else if (direction === 'w') {
+                    posX1 = x * TILE_SIZE;
+                }
+                
+                // Position second edge relative to first
+                let posX2 = posX1;
+                let posZ2 = posZ1;
+                
+                if (isStraightWall) {
+                    // Straight wall: second edge is same type, positioned on adjacent tile
+                    // Calculate second tile coordinates based on direction2 offset
+                    let x2 = x;
+                    let z2 = z;
+                    if (direction2 === 'e') x2 = x + 1;
+                    else if (direction2 === 'w') x2 = x - 1;
+                    else if (direction2 === 's') z2 = z + 1;
+                    else if (direction2 === 'n') z2 = z - 1;
+                    
+                    // Position second edge based on second tile and same edge direction
+                    posX2 = x2 * TILE_SIZE + TILE_SIZE/2;
+                    posZ2 = z2 * TILE_SIZE + TILE_SIZE/2;
+                    
+                    if (direction === 'n') {
+                        posZ2 = z2 * TILE_SIZE;
+                    } else if (direction === 's') {
+                        posZ2 = (z2 + 1) * TILE_SIZE;
+                    } else if (direction === 'e') {
+                        posX2 = (x2 + 1) * TILE_SIZE;
+                    } else if (direction === 'w') {
+                        posX2 = x2 * TILE_SIZE;
+                    }
+                } else {
+                    // L-shaped wall: second edge is perpendicular
+                    if (direction2 === 'n') {
+                        posZ2 = posZ1 - TILE_SIZE;
+                    } else if (direction2 === 's') {
+                        posZ2 = posZ1 + TILE_SIZE;
+                    } else if (direction2 === 'e') {
+                        posX2 = posX1 + TILE_SIZE;
+                    } else if (direction2 === 'w') {
+                        posX2 = posX1 - TILE_SIZE;
+                    }
+                }
+                
+                wall2.position.set(posX2 - posX1, 1.5, posZ2 - posZ1);
+                group.position.set(posX1, 0, posZ1);
+            }
+            
+            const wall = {
+                owner: owner,
+                x: x,
+                z: z,
+                direction: direction,
+                direction2: direction2, // Second edge for 1x2 walls
+                size: size, // 1 or 2
+                mesh: group
+            };
+            
+            group.userData = { isWall: true, wallRef: wall };
+            walls.push(wall);
+            scene.add(group);
+            
+            if(units.length > 0) log(`P${owner} built a ${size}x1 wall on edge [${x},${z}] ${direction}${size === 2 ? ` + ${direction2}` : ''}`);
+            return wall;
+        }
+
+        // --- Interaction ---
+
+        function onMouseMove(event) {
+            // Only show hover highlight in wall build mode
+            if (!wallBuildMode) {
+                clearHoverEdgeHighlight();
+                return;
+            }
+
+            // Update mouse position relative to renderer
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            // Raycast to find what we're hovering over
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+
+            if (intersects.length > 0) {
+                // Find intersection with ground/tile
+                const groundHit = intersects.find(i => 
+                    i.object.userData.type === 'tile' || 
+                    (i.object.parent && i.object.parent.userData.type === 'tile')
+                );
+
+                if (groundHit && groundHit.point) {
+                    // Get edge information from world position
+                    const edgeInfo = getEdgeFromWorldPosition(groundHit.point.x, groundHit.point.z);
+                    
+                    if (edgeInfo && wallBuildHero) {
+                        // For 1x2 walls, check if at least one edge is on hero's tile
+                        // For 1x1 walls, the edge must be on hero's tile
+                        let isValidEdge = false;
+                        
+                        if (wallBuildSize === 2) {
+                            // Check if first edge is on hero's tile
+                            const firstEdgeOnHeroTile = (edgeInfo.x === wallBuildHero.x && edgeInfo.z === wallBuildHero.z);
+                            
+                            if (firstEdgeOnHeroTile) {
+                                // First edge is on hero's tile, check if it's not blocked
+                                isValidEdge = !isEdgeBlocked(edgeInfo.x, edgeInfo.z, edgeInfo.direction);
+                            } else {
+                                // First edge not on hero's tile, check if second edge is on hero's tile
+                                const secondEdge = getSecondEdgeForStraightWall(
+                                    edgeInfo.x,
+                                    edgeInfo.z,
+                                    edgeInfo.direction,
+                                    edgeInfo.half
+                                );
+                                const secondEdgeOnHeroTile = (secondEdge.x === wallBuildHero.x && secondEdge.z === wallBuildHero.z);
+                                
+                                if (secondEdgeOnHeroTile) {
+                                    // Second edge is on hero's tile, check if both edges are not blocked
+                                    isValidEdge = !isEdgeBlocked(edgeInfo.x, edgeInfo.z, edgeInfo.direction) &&
+                                                  !isEdgeBlocked(secondEdge.x, secondEdge.z, secondEdge.direction);
+                                }
+                            }
+                        } else {
+                            // For 1x1 walls, edge must be on hero's tile
+                            isValidEdge = isValidWallBuildEdge(
+                                edgeInfo.x, 
+                                edgeInfo.z, 
+                                edgeInfo.direction, 
+                                wallBuildHero
+                            );
+                        }
+
+                        if (isValidEdge) {
+                            // Check if we need to update the hover highlight
+                            let needsUpdate = true;
+                            if (hoverEdgeHighlight) {
+                                if (hoverEdgeHighlight.isGroup && hoverEdgeHighlight.userData) {
+                                    // For groups (1x2 walls), check if both edges match
+                                    const secondEdge = getSecondEdgeForStraightWall(
+                                        edgeInfo.x,
+                                        edgeInfo.z,
+                                        edgeInfo.direction,
+                                        edgeInfo.half
+                                    );
+                                    needsUpdate = (
+                                        hoverEdgeHighlight.userData.x !== edgeInfo.x ||
+                                        hoverEdgeHighlight.userData.z !== edgeInfo.z ||
+                                        hoverEdgeHighlight.userData.direction !== edgeInfo.direction ||
+                                        hoverEdgeHighlight.userData.x2 !== secondEdge.x ||
+                                        hoverEdgeHighlight.userData.z2 !== secondEdge.z
+                                    );
+                                    // Also check if it's still a 1x2 wall
+                                    if (wallBuildSize !== 2) {
+                                        needsUpdate = true;
+                                    }
+                                } else if (hoverEdgeHighlight.userData) {
+                                    // For single highlights (1x1 walls)
+                                    needsUpdate = (
+                                        hoverEdgeHighlight.userData.x !== edgeInfo.x ||
+                                        hoverEdgeHighlight.userData.z !== edgeInfo.z ||
+                                        hoverEdgeHighlight.userData.direction !== edgeInfo.direction
+                                    );
+                                    // Also check if it's now a 1x2 wall
+                                    if (wallBuildSize === 2) {
+                                        needsUpdate = true;
+                                    }
+                                }
+                            }
+                            
+                            if (needsUpdate) {
+                                // Clear old hover highlight
+                                clearHoverEdgeHighlight();
+                                
+                                // Create hover highlight(s)
+                                if (wallBuildSize === 2) {
+                                    // For 1x2 walls, show both edges in a straight line
+                                    const secondEdge = getSecondEdgeForStraightWall(
+                                        edgeInfo.x,
+                                        edgeInfo.z,
+                                        edgeInfo.direction,
+                                        edgeInfo.half
+                                    );
+                                    
+                                    // Check if second tile is within bounds
+                                    if (secondEdge.x >= 0 && secondEdge.x < BOARD_SIZE &&
+                                        secondEdge.z >= 0 && secondEdge.z < BOARD_SIZE) {
+                                        
+                                        // For straight walls, if the first edge is valid, the second edge
+                                        // should also be valid (it's part of the same wall spanning 2 tiles)
+                                        // We just need to check if it's not blocked
+                                        const secondEdgeNotBlocked = !isEdgeBlocked(secondEdge.x, secondEdge.z, secondEdge.direction);
+                                        
+                                        if (secondEdgeNotBlocked) {
+                                            // Create group to hold both highlights
+                                            const group = new THREE.Group();
+                                            
+                                            // Create first edge highlight
+                                            const highlight1 = createHoverEdgeHighlight(
+                                                edgeInfo.x,
+                                                edgeInfo.z,
+                                                edgeInfo.direction
+                                            );
+                                            group.add(highlight1);
+                                            
+                                            // Create second edge highlight (same direction, adjacent tile)
+                                            // For horizontal edges, ensure we're using the correct tile coordinates
+                                            const highlight2 = createHoverEdgeHighlight(
+                                                secondEdge.x,
+                                                secondEdge.z,
+                                                secondEdge.direction
+                                            );
+                                            group.add(highlight2);
+                                            
+                                            // Ensure both highlights are visible
+                                            highlight1.visible = true;
+                                            highlight2.visible = true;
+                                            
+                                            group.userData = {
+                                                x: edgeInfo.x,
+                                                z: edgeInfo.z,
+                                                direction: edgeInfo.direction,
+                                                direction2: secondEdge.direction2,
+                                                x2: secondEdge.x,
+                                                z2: secondEdge.z
+                                            };
+                                            group.isGroup = true;
+                                            
+                                            // Ensure group matrix is updated
+                                            group.updateMatrixWorld(true);
+                                            
+                                            hoverEdgeHighlight = group;
+                                            scene.add(group);
+                                        } else {
+                                            // Second edge not valid, show only first
+                                            hoverEdgeHighlight = createHoverEdgeHighlight(
+                                                edgeInfo.x,
+                                                edgeInfo.z,
+                                                edgeInfo.direction
+                                            );
+                                            scene.add(hoverEdgeHighlight);
+                                        }
+                                    } else {
+                                        // Second tile out of bounds, show only first
+                                        hoverEdgeHighlight = createHoverEdgeHighlight(
+                                            edgeInfo.x,
+                                            edgeInfo.z,
+                                            edgeInfo.direction
+                                        );
+                                        scene.add(hoverEdgeHighlight);
+                                    }
+                                } else {
+                                    // For 1x1 walls, show single edge
+                                    hoverEdgeHighlight = createHoverEdgeHighlight(
+                                        edgeInfo.x,
+                                        edgeInfo.z,
+                                        edgeInfo.direction
+                                    );
+                                    scene.add(hoverEdgeHighlight);
+                                }
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // No valid edge under mouse - clear hover highlight
+            clearHoverEdgeHighlight();
+        }
+
+        function onMouseClick(event) {
+            if (isGameOver) return;
+            // In multiplayer, only allow current player to act
+            if (isMultiplayer && currentPlayer !== myPlayerNumber) return;
+            // In AI mode, only allow player 1 (human) to act
+            if (isPlayingAI && currentPlayer !== 1) return;
+            if (event.target.closest('#actions-panel') || event.target.closest('#modal-overlay')) return;
+
+            // Update mouse position relative to renderer
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+
+            if (intersects.length > 0) {
+                const hit = intersects.find(i => 
+                    (i.object.userData.isUnit) || 
+                    (i.object.userData.isSpire) ||
+                    (i.object.userData.isWall) ||
+                    (i.object.userData.type === 'tile') ||
+                    (i.object.userData.type === 'edge') ||
+                    (i.object.parent && (i.object.parent.userData.isUnit || i.object.parent.userData.isSpire || i.object.parent.userData.isWall))
+                );
+
+                if (!hit) {
+                    deselect();
+                    return;
+                }
+
+                const object = hit.object.userData.isUnit ? hit.object : 
+                              hit.object.userData.isSpire ? hit.object :
+                              hit.object.userData.isWall ? hit.object :
+                              hit.object.parent?.userData.isUnit ? hit.object.parent : 
+                              hit.object.parent?.userData.isSpire ? hit.object.parent : 
+                              hit.object.parent?.userData.isWall ? hit.object.parent : 
+                              hit.object;
+
+                if (buildMode) {
+                    // In build mode, check if clicking on a valid build tile
+                    if (object.userData.type === 'tile' && object.userData.isBuildTarget) {
+                        tryBuildSpireAt(object.userData.x, object.userData.z);
+                    } else {
+                        // Cancel build mode
+                        clearBuildHighlights();
+                        buildMode = false;
+                        buildModeHero = null;
+                        log("Build cancelled.");
+                    }
+                } else if (wallBuildMode) {
+                    // In wall build mode, detect edge from intersection point
+                    if (hit.point && wallBuildHero) {
+                        const edgeInfo = getEdgeFromWorldPosition(hit.point.x, hit.point.z);
+                        if (edgeInfo) {
+                            // For 1x2 walls, check if at least one edge is on hero's tile
+                            // For 1x1 walls, the edge must be on hero's tile
+                            let isValidEdge = false;
+                            
+                            if (wallBuildSize === 2) {
+                                // Check if first edge is on hero's tile
+                                const firstEdgeOnHeroTile = (edgeInfo.x === wallBuildHero.x && edgeInfo.z === wallBuildHero.z);
+                                
+                                if (firstEdgeOnHeroTile) {
+                                    // First edge is on hero's tile, check if it's not blocked
+                                    isValidEdge = !isEdgeBlocked(edgeInfo.x, edgeInfo.z, edgeInfo.direction);
+                                } else {
+                                    // First edge not on hero's tile, check if second edge is on hero's tile
+                                    const secondEdge = getSecondEdgeForStraightWall(
+                                        edgeInfo.x,
+                                        edgeInfo.z,
+                                        edgeInfo.direction,
+                                        edgeInfo.half
+                                    );
+                                    const secondEdgeOnHeroTile = (secondEdge.x === wallBuildHero.x && secondEdge.z === wallBuildHero.z);
+                                    
+                                    if (secondEdgeOnHeroTile) {
+                                        // Second edge is on hero's tile, check if both edges are not blocked
+                                        isValidEdge = !isEdgeBlocked(edgeInfo.x, edgeInfo.z, edgeInfo.direction) &&
+                                                      !isEdgeBlocked(secondEdge.x, secondEdge.z, secondEdge.direction);
+                                    }
+                                }
+                            } else {
+                                // For 1x1 walls, edge must be on hero's tile
+                                isValidEdge = isValidWallBuildEdge(
+                                    edgeInfo.x, 
+                                    edgeInfo.z, 
+                                    edgeInfo.direction, 
+                                    wallBuildHero
+                                );
+                            }
+                            
+                            if (isValidEdge) {
+                                tryBuildWallAtEdge(edgeInfo.x, edgeInfo.z, edgeInfo.direction, edgeInfo.half);
+                            } else {
+                                // Cancel wall build mode
+                                clearEdgeHighlights();
+                                clearHoverEdgeHighlight();
+                                wallBuildMode = false;
+                                wallBuildHero = null;
+                                wallBuildTile2 = null;
+                                log("Wall build cancelled - not a valid edge.");
+                            }
+                        } else {
+                            // Cancel wall build mode
+                            clearEdgeHighlights();
+                            clearHoverEdgeHighlight();
+                            wallBuildMode = false;
+                            wallBuildHero = null;
+                            wallBuildTile2 = null;
+                            log("Wall build cancelled.");
+                        }
+                    } else {
+                        // Cancel wall build mode
+                        clearEdgeHighlights();
+                        clearHoverEdgeHighlight();
+                        wallBuildMode = false;
+                        wallBuildHero = null;
+                        log("Wall build cancelled.");
+                    }
+                } else if (object.userData.isUnit) {
+                    // Select ANY unit to see stats, but only control owner 1
+                    selectUnit(object.userData.unitRef);
+                } else if (object.userData.isSpire) {
+                    // Select ANY spire to see stats
+                    selectSpire(object.userData.spireRef);
+                } else if (object.userData.type === 'tile' && selectedUnit) {
+                    tryMove(selectedUnit, object.userData.x, object.userData.z);
+                }
+            } else {
+                // Clicked on empty space
+                if (buildMode) {
+                    // Cancel build mode
+                    clearBuildHighlights();
+                    buildMode = false;
+                    buildModeHero = null;
+                    log("Build cancelled.");
+                } else if (wallBuildMode) {
+                    // Cancel wall build mode
+                    clearEdgeHighlights();
+                    wallBuildMode = false;
+                    wallBuildHero = null;
+                    wallBuildTile2 = null;
+                    log("Wall build cancelled.");
+                } else {
+                    deselect();
+                }
+            }
+        }
+
+        function selectUnit(unit) {
+            // Toggle: if clicking the same unit, deselect it
+            if (selectedUnit === unit) {
+                deselect();
+                return;
+            }
+            
+            // Cancel build mode if active
+            if (buildMode) {
+                clearBuildHighlights();
+                buildMode = false;
+                buildModeHero = null;
+            }
+            
+            // Cancel wall build mode if active
+            if (wallBuildMode) {
+                clearEdgeHighlights();
+                wallBuildMode = false;
+                wallBuildHero = null;
+                wallBuildTile2 = null;
+            }
+            
+            // Deselect previous selections
+            if (selectedUnit) {
+                selectedUnit.mesh.position.y = BASE_UNIT_Y;
+            }
+            if (selectedSpire) {
+                selectedSpire = null;
+            }
+            
+            // Select new unit - set to base Y + selection offset
+            unit.mesh.position.y = BASE_UNIT_Y + 1;
+            selectedUnit = unit;
+            selectedSpire = null;
+            
+            highlightMesh.visible = true;
+            highlightMesh.position.set(unit.mesh.position.x, 0.5, unit.mesh.position.z);
+            updateUI();
+        }
+
+        function selectSpire(spire) {
+            // Toggle: if clicking the same spire, deselect it
+            if (selectedSpire === spire) {
+                deselect();
+                return;
+            }
+            
+            // Cancel build mode if active
+            if (buildMode) {
+                clearBuildHighlights();
+                buildMode = false;
+                buildModeHero = null;
+            }
+            
+            // Cancel wall build mode if active
+            if (wallBuildMode) {
+                clearEdgeHighlights();
+                wallBuildMode = false;
+                wallBuildHero = null;
+                wallBuildTile2 = null;
+            }
+            
+            // Deselect previous selections
+            if (selectedUnit) {
+                selectedUnit.mesh.position.y = BASE_UNIT_Y;
+            }
+            if (selectedSpire) {
+                selectedSpire = null;
+            }
+            
+            // Select new spire
+            selectedSpire = spire;
+            selectedUnit = null;
+            
+            highlightMesh.visible = true;
+            highlightMesh.position.set(spire.mesh.position.x, 0.5, spire.mesh.position.z);
+            updateUI();
+        }
+
+        function tryMove(unit, targetX, targetZ) {
+            // Security Check - only current player can control their units
+            if (unit.owner !== currentPlayer) {
+                log("Cannot control opponent's units.");
+                return;
+            }
+
+            if (unit.hasMoved) {
+                log("Unit exhausted (already moved).");
+                return;
+            }
+
+            const dx = Math.abs(targetX - unit.x);
+            const dz = Math.abs(targetZ - unit.z);
+            const dist = Math.max(dx, dz);
+
+            const maxMove = unit.type === 'hero' ? 1 : 2;
+            let cost = 0;
+            if (unit.type === 'transport') cost = 1;
+            else cost = dist;
+
+            if (dist === 0) return; 
+            if (dist > maxMove) {
+                log(`Too far! ${unit.type} max move is ${maxMove}`);
+                return;
+            }
+            if (unit.energy < cost) {
+                log(`Need ${cost} energy. Have ${unit.energy}.`);
+                return;
+            }
+
+            if (units.some(u => u.x === targetX && u.z === targetZ)) {
+                log("Tile occupied by a unit.");
+                return;
+            }
+            if (spires.some(s => s.x === targetX && s.z === targetZ)) {
+                log("Blocked by Spire.");
+                return;
+            }
+            
+            // Check if movement crosses a blocked edge
+            const dirX = targetX - unit.x;
+            const dirZ = targetZ - unit.z;
+            
+            // Determine which edge we're crossing
+            let edgeX = unit.x;
+            let edgeZ = unit.z;
+            let edgeDir = null;
+            
+            if (dirX > 0) {
+                // Moving east - check east edge of current tile
+                edgeDir = 'e';
+            } else if (dirX < 0) {
+                // Moving west - check west edge of current tile
+                edgeDir = 'w';
+            } else if (dirZ > 0) {
+                // Moving south - check south edge of current tile
+                edgeDir = 's';
+            } else if (dirZ < 0) {
+                // Moving north - check north edge of current tile
+                edgeDir = 'n';
+            }
+            
+            // Check if edge is blocked
+            if (edgeDir && isEdgeBlocked(edgeX, edgeZ, edgeDir)) {
+                log("Blocked by wall.");
+                return;
+            }
+
+            // Capture old position BEFORE updating
+            const oldX = unit.x;
+            const oldZ = unit.z;
+            
+            unit.energy -= cost;
+            unit.hasMoved = true;
+            updateEnergyLabel(unit);
+            
+            // Update position immediately for local player
+            unit.x = targetX;
+            unit.z = targetZ;
+            
+            // Send move action to server in multiplayer
+            if (isMultiplayer) {
+                sendGameAction('move', {
+                    unitId: unit.id,
+                    owner: unit.owner,
+                    unitType: unit.type,
+                    oldX: oldX,
+                    oldZ: oldZ,
+                    x: targetX,
+                    z: targetZ,
+                    energy: unit.energy,
+                    hasMoved: unit.hasMoved
+                });
+            }
+            
+            // Animate move (local player animates immediately)
+            animateMove(unit, targetX, targetZ);
+            
+            if (unit.type === 'transport' && unit.energy <= 0) {
+                setTimeout(() => {
+                    log("Transport depleted! Emergency Teleport.");
+                    resetTransport(unit);
+                    updateUI();
+                    checkAndAutoPass();
+                }, 600);
+            } else {
+                deselect(); // Deselect after move
+                setTimeout(() => {
+                    checkAdjacencyEvents();
+                    checkAndAutoPass();
+                }, 600);
+            }
+        }
+
+        function animateMove(unit, x, z) {
+            unit.x = x;
+            unit.z = z;
+            
+            // Always use base Y position to prevent sinking - selection offset is visual only
+            const targetY = BASE_UNIT_Y + (selectedUnit === unit ? 1 : 0);
+            const targetPos = new THREE.Vector3(x * TILE_SIZE + TILE_SIZE/2, targetY, z * TILE_SIZE + TILE_SIZE/2);
+            
+            const startPos = unit.mesh.position.clone();
+            const duration = 500;
+            const startTime = Date.now();
+
+            function updatePos() {
+                const now = Date.now();
+                const progress = Math.min((now - startTime) / duration, 1);
+                unit.mesh.position.lerpVectors(startPos, targetPos, progress);
+                
+                if (progress < 1) requestAnimationFrame(updatePos);
+                else {
+                    unit.mesh.position.copy(targetPos);
+                    // Ensure final position matches base Y + selection offset
+                    const finalY = BASE_UNIT_Y + (selectedUnit === unit ? 1 : 0);
+                    unit.mesh.position.y = finalY;
+                }
+            }
+            updatePos();
+        }
+
+        function deselect() {
+            if (selectedUnit) selectedUnit.mesh.position.y = BASE_UNIT_Y;
+            selectedUnit = null;
+            selectedSpire = null;
+            highlightMesh.visible = false;
+            
+            // Cancel build mode if active
+            if (buildMode) {
+                clearBuildHighlights();
+                buildMode = false;
+                buildModeHero = null;
+            }
+            
+            // Cancel wall build mode if active
+            if (wallBuildMode) {
+                clearEdgeHighlights();
+                wallBuildMode = false;
+                wallBuildHero = null;
+                wallBuildTile2 = null;
+            }
+            
+            // Hide popup
+            const popup = document.getElementById('unit-popup');
+            popup.style.display = 'none';
+            
+            // Hide actions panel
+            document.getElementById('actions-panel').style.display = 'none';
+            
+            // Hide transfer input
+            document.getElementById('transfer-energy-container').style.display = 'none';
+            
+            // Hide receive energy input
+            document.getElementById('receive-energy-container').style.display = 'none';
+            
+            updateUI(); // Resets side UI
+        }
+
+        function resetTransport(unit) {
+            // Find the player's spire to reset transport next to it
+            const mySpire = spires.find(s => s.owner === unit.owner);
+            if (!mySpire) return; // Safety check
+            
+            // Reset transport to its starting position (right of spire, left-to-right: hero, spire, transport)
+            const start = unit.owner === 1 ? P1_START : P2_START;
+            const tx = start.x + 2; // Transport is 2 positions right of hero
+            const tz = start.y;
+            
+            unit.x = tx;
+            unit.z = tz;
+            // Always use base Y position + selection offset to prevent sinking
+            const resetY = BASE_UNIT_Y + (selectedUnit === unit ? 1 : 0);
+            unit.mesh.position.set(tx * TILE_SIZE + TILE_SIZE/2, resetY, tz * TILE_SIZE + TILE_SIZE/2);
+            unit.energy = 0; // Transport never gains energy except from spire
+            updateEnergyLabel(unit);
+            
+            unit.mesh.scale.set(0.1, 0.1, 0.1);
+            let s = 0.1;
+            function popIn() {
+                s += 0.05;
+                unit.mesh.scale.set(s,s,s);
+                if(s < 1) requestAnimationFrame(popIn);
+            }
+            popIn();
+        }
+
+        function buildSpire() {
+            if (!selectedUnit || selectedUnit.type !== 'hero') return;
+            if (selectedUnit.owner !== currentPlayer) return; // Security check
+
+            if (selectedUnit.energy < 3) {
+                log("Not enough energy (Need 3).");
+                return;
+            }
+            
+            // Enter build mode
+            buildMode = true;
+            buildModeHero = selectedUnit;
+            
+            // Highlight valid build tiles
+            highlightValidBuildTiles(selectedUnit);
+            
+            log("Click on an adjacent tile to build Spire. Click elsewhere to cancel.");
+        }
+
+        function highlightValidBuildTiles(hero) {
+            const offsets = [[0,1], [0,-1], [1,0], [-1,0]];
+            
+            offsets.forEach(offset => {
+                const nx = hero.x + offset[0];
+                const nz = hero.z + offset[1];
+                
+                if (nx >= 0 && nx < BOARD_SIZE && nz >= 0 && nz < BOARD_SIZE) {
+                    // Check if tile is free
+                    if (!units.some(u => u.x === nx && u.z === nz) && 
+                        !spires.some(s => s.x === nx && s.z === nz) &&
+                        !walls.some(w => w.x === nx && w.z === nz)) {
+                        // Highlight this tile
+                        const tile = gridMeshes[nx][nz];
+                        if (tile) {
+                            tile.material.color.setHex(COLORS.select);
+                            tile.userData.isBuildTarget = true;
+                        }
+                    }
+                }
+            });
+        }
+
+        function clearBuildHighlights() {
+            for (let x = 0; x < BOARD_SIZE; x++) {
+                for (let z = 0; z < BOARD_SIZE; z++) {
+                    const tile = gridMeshes[x][z];
+                    if (tile && tile.userData.isBuildTarget) {
+                        const isEven = (x + z) % 2 === 0;
+                        tile.material.color.setHex(isEven ? COLORS.ground1 : COLORS.ground2);
+                        tile.userData.isBuildTarget = false;
+                    }
+                }
+            }
+        }
+
+        function tryBuildSpireAt(x, z) {
+            if (!buildMode || !buildModeHero) return false;
+            
+            // Check if tile is adjacent to hero
+            const dx = Math.abs(x - buildModeHero.x);
+            const dz = Math.abs(z - buildModeHero.z);
+            const dist = Math.max(dx, dz);
+            
+            if (dist !== 1) {
+                log("Must build on an adjacent tile.");
+                return false;
+            }
+            
+            // Check if tile is free
+            if (units.some(u => u.x === x && u.z === z)) {
+                log("Tile occupied by a unit.");
+                return false;
+            }
+            if (spires.some(s => s.x === x && s.z === z)) {
+                log("Tile already has a Spire.");
+                return false;
+            }
+            
+            // Build the spire
+            buildModeHero.energy -= 3;
+            buildModeHero.hasMoved = true;
+            updateEnergyLabel(buildModeHero);
+            
+            // Send build action to server in multiplayer
+            if (isMultiplayer) {
+                sendGameAction('buildSpire', {
+                    owner: buildModeHero.owner,
+                    x: x,
+                    z: z
+                });
+            }
+            
+            // Spawn spire (both local and remote will spawn)
+            spawnSpire(buildModeHero.owner, x, z);
+            
+            // Exit build mode
+            clearBuildHighlights();
+            buildMode = false;
+            buildModeHero = null;
+            
+            deselect();
+            checkAndAutoPass();
+            return true;
+        }
+
+        function buildWall(size) {
+            // size: 1 for 1x1, 2 for 1x2
+            if (!selectedUnit || selectedUnit.type !== 'hero') return;
+            if (selectedUnit.owner !== currentPlayer) return; // Security check
+
+            const energyCost = size;
+            if (selectedUnit.energy < energyCost) {
+                log(`Not enough energy (Need ${energyCost}).`);
+                return;
+            }
+            
+            // Cancel spire build mode if active
+            if (buildMode) {
+                clearBuildHighlights();
+                buildMode = false;
+                buildModeHero = null;
+            }
+            
+            // Enter wall build mode
+            wallBuildMode = true;
+            wallBuildHero = selectedUnit;
+            wallBuildSize = size;
+            
+            // Highlight valid build edges
+            highlightValidWallBuildEdges(selectedUnit, size);
+            
+            log(`Click on an edge to build ${size}x1 wall. Click elsewhere to cancel.`);
+        }
+
+        function isValidWallBuildEdge(x, z, direction, hero) {
+            // Edge must be on the hero's tile (not adjacent tiles)
+            const isOnHeroTile = (x === hero.x && z === hero.z);
+            
+            if (!isOnHeroTile) {
+                return false;
+            }
+            
+            // Check if edge is already blocked
+            if (isEdgeBlocked(x, z, direction)) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        function highlightValidWallBuildEdges(hero, size) {
+            // Clear any existing highlights - we don't show them anymore, only hover highlight
+            clearEdgeHighlights();
+            // This function is kept for compatibility but doesn't create visible highlights
+            // Validation is now done in onMouseMove using isValidWallBuildEdge
+        }
+
+        function getSecondEdgeForStraightWall(x, z, direction, half) {
+            // Get the second edge for a straight 1x2 wall
+            // For straight walls, direction2 is the offset direction, and the second edge
+            // is the same direction as the first, but on an adjacent tile
+            
+            let direction2; // Offset direction
+            let x2 = x, z2 = z; // Second tile coordinates
+            
+            if (direction === 'n' || direction === 's') {
+                // Horizontal edge - offset east or west
+                if (half === 'left') {
+                    direction2 = 'w';
+                    x2 = x - 1;
+                } else {
+                    direction2 = 'e';
+                    x2 = x + 1;
+                }
+            } else {
+                // Vertical edge - offset north or south
+                if (half === 'top') {
+                    direction2 = 'n';
+                    z2 = z - 1;
+                } else {
+                    direction2 = 's';
+                    z2 = z + 1;
+                }
+            }
+            
+            // Second edge is same direction as first, on adjacent tile
+            return {
+                x: x2,
+                z: z2,
+                direction: direction, // Same direction as first edge
+                direction2: direction2 // Offset direction for reference
+            };
+        }
+
+        function getSecondEdgeDirection(x, z, direction, half) {
+            // Get the second edge direction for 1x2 walls based on primary edge and half
+            // This returns the offset direction (direction2) used in wall building
+            // For horizontal edges (n/s), extend left/right (w/e offset)
+            // For vertical edges (e/w), extend top/bottom (n/s offset)
+            if (direction === 'n' || direction === 's') {
+                // Horizontal edge - offset east or west
+                if (half === 'left') {
+                    return 'w'; // West offset
+                } else {
+                    return 'e'; // East offset
+                }
+            } else {
+                // Vertical edge - offset north or south
+                if (half === 'top') {
+                    return 'n'; // North offset
+                } else {
+                    return 's'; // South offset
+                }
+            }
+        }
+
+        function getAdjacentEdge(x, z, direction, half) {
+            // Get the edge adjacent to this edge (for 1x2 walls)
+            // For horizontal edges (n/s), extend left/right (w/e edges of same tile)
+            // For vertical edges (e/w), extend top/bottom (n/s edges of same tile)
+            const direction2 = getSecondEdgeDirection(x, z, direction, half);
+            return {x: x, z: z, direction: direction2};
+        }
+
+        function isEdgeBlocked(x, z, direction) {
+            // Check if this edge already has a wall
+            return walls.some(w => {
+                // Check if wall is on this exact edge
+                if (w.x === x && w.z === z && w.direction === direction) {
+                    return true;
+                }
+                // For 1x2 walls, check second edge
+                if (w.size === 2 && w.direction2 === direction && w.x === x && w.z === z) {
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        function getAdjacentEdgeCoords(x, z, direction) {
+            // Get coordinates of adjacent edge
+            if (direction === 'n') return {x: x, z: z - 1};
+            if (direction === 's') return {x: x, z: z + 1};
+            if (direction === 'e') return {x: x + 1, z: z};
+            if (direction === 'w') return {x: x - 1, z: z};
+            return {x: x, z: z};
+        }
+
+        function tryBuildWallAtEdge(x, z, direction, half) {
+            if (!wallBuildMode || !wallBuildHero) return false;
+            
+            // For 1x1 walls, edge must be on hero's tile
+            // For 1x2 walls, at least one edge must be on hero's tile
+            const firstEdgeOnHeroTile = (x === wallBuildHero.x && z === wallBuildHero.z);
+            
+            if (wallBuildSize === 1) {
+                // 1x1 wall: must be on hero's tile
+                if (!firstEdgeOnHeroTile) {
+                    log("Must build on an edge of the hero's tile.");
+                    return false;
+                }
+            }
+            
+            // Check if edge is already blocked
+            if (isEdgeBlocked(x, z, direction)) {
+                log("Edge already has a wall.");
+                return false;
+            }
+            
+            // For 1x2 walls, determine second edge based on half or straight wall span
+            let direction2 = null;
+            if (wallBuildSize === 2) {
+                // For 1x2 walls, at least one edge must be on hero's tile
+                // We'll check this after determining the second edge
+                // Check if this is a straight wall spanning 2 tiles
+                if (wallBuildTile2 && wallBuildTile2.x !== undefined && wallBuildTile2.z !== undefined) {
+                    // Straight wall: determine direction2 to extend to second tile
+                    const dx = wallBuildTile2.x - x;
+                    const dz = wallBuildTile2.z - z;
+                    
+                    if (dx !== 0 && dz === 0) {
+                        // Horizontal span: tiles (x,z) and (x+dx,z)
+                        // Keep same edge type (horizontal), extend in span direction
+                        if (direction === 'n' || direction === 's') {
+                            // Same horizontal edge type - extend east or west
+                            direction2 = dx > 0 ? 'e' : 'w';
+                            // Check if second tile's edge is blocked
+                            const secondTileEdge = direction === 'n' ? 'n' : 's';
+                            if (isEdgeBlocked(wallBuildTile2.x, wallBuildTile2.z, secondTileEdge)) {
+                                log("Cannot extend wall - second tile edge blocked.");
+                                return false;
+                            }
+                        } else {
+                            // Wrong edge type - fall back to perpendicular
+                            direction2 = dx > 0 ? 'e' : 'w';
+                            if (isEdgeBlocked(x, z, direction2)) {
+                                log("Cannot extend wall - edge blocked.");
+                                return false;
+                            }
+                        }
+                    } else if (dx === 0 && dz !== 0) {
+                        // Vertical span: tiles (x,z) and (x,z+dz)
+                        // Keep same edge type (vertical), extend in span direction
+                        if (direction === 'e' || direction === 'w') {
+                            // Same vertical edge type - extend north or south
+                            direction2 = dz > 0 ? 's' : 'n';
+                            // Check if second tile's edge is blocked
+                            const secondTileEdge = direction === 'e' ? 'e' : 'w';
+                            if (isEdgeBlocked(wallBuildTile2.x, wallBuildTile2.z, secondTileEdge)) {
+                                log("Cannot extend wall - second tile edge blocked.");
+                                return false;
+                            }
+                        } else {
+                            // Wrong edge type - fall back to perpendicular
+                            direction2 = dz > 0 ? 's' : 'n';
+                            if (isEdgeBlocked(x, z, direction2)) {
+                                log("Cannot extend wall - edge blocked.");
+                                return false;
+                            }
+                        }
+                    } else {
+                        // Fall back to perpendicular L-shape
+                        if (direction === 'n' || direction === 's') {
+                            direction2 = half === 'left' ? 'w' : 'e';
+                            if (isEdgeBlocked(x, z, direction2)) {
+                                log("Cannot extend wall - edge blocked.");
+                                return false;
+                            }
+                        } else {
+                            direction2 = half === 'top' ? 'n' : 's';
+                            if (isEdgeBlocked(x, z, direction2)) {
+                                log("Cannot extend wall - edge blocked.");
+                                return false;
+                            }
+                        }
+                    }
+                } else {
+                    // L-shaped wall: determine second edge based on which half of the edge was clicked
+                    // The second edge should be the perpendicular edge on the same tile
+                    if (direction === 'n' || direction === 's') {
+                        // Horizontal edge - extend to left (west) or right (east) edge of same tile
+                        if (half === 'left') {
+                            // Extend to west edge of same tile
+                            direction2 = 'w';
+                            if (isEdgeBlocked(x, z, 'w')) {
+                                log("Cannot extend wall - west edge blocked.");
+                                return false;
+                            }
+                        } else {
+                            // Extend to east edge of same tile
+                            direction2 = 'e';
+                            if (isEdgeBlocked(x, z, 'e')) {
+                                log("Cannot extend wall - east edge blocked.");
+                                return false;
+                            }
+                        }
+                    } else {
+                        // Vertical edge - extend to top (north) or bottom (south) edge of same tile
+                        if (half === 'top') {
+                            // Extend to north edge of same tile
+                            direction2 = 'n';
+                            if (isEdgeBlocked(x, z, 'n')) {
+                                log("Cannot extend wall - north edge blocked.");
+                                return false;
+                            }
+                        } else {
+                            // Extend to south edge of same tile
+                            direction2 = 's';
+                            if (isEdgeBlocked(x, z, 's')) {
+                                log("Cannot extend wall - south edge blocked.");
+                                return false;
+                            }
+                        }
+                    }
+                }
+                
+                // For 1x2 walls, verify at least one edge is on hero's tile
+                if (!firstEdgeOnHeroTile) {
+                    // Check if second edge is on hero's tile
+                    const secondEdge = getSecondEdgeForStraightWall(x, z, direction, half);
+                    const secondEdgeOnHeroTile = (secondEdge.x === wallBuildHero.x && secondEdge.z === wallBuildHero.z);
+                    
+                    if (!secondEdgeOnHeroTile) {
+                        log("At least one edge of a 1x2 wall must be on the hero's tile.");
+                        return false;
+                    }
+                    
+                    // Also check if second edge is blocked
+                    if (isEdgeBlocked(secondEdge.x, secondEdge.z, secondEdge.direction)) {
+                        log("Second edge already has a wall.");
+                        return false;
+                    }
+                }
+            }
+            
+            // Build the wall
+            const energyCost = wallBuildSize;
+            wallBuildHero.energy -= energyCost;
+            wallBuildHero.hasMoved = true;
+            updateEnergyLabel(wallBuildHero);
+            
+            // Send build action to server in multiplayer
+            if (isMultiplayer) {
+                sendGameAction('buildWall', {
+                    owner: wallBuildHero.owner,
+                    x: x,
+                    z: z,
+                    direction: direction,
+                    size: wallBuildSize,
+                    direction2: direction2
+                });
+            }
+            
+            // Spawn wall (both local and remote will spawn)
+            spawnWall(wallBuildHero.owner, x, z, direction, wallBuildSize, direction2);
+            
+            // Exit wall build mode
+            clearEdgeHighlights();
+            wallBuildMode = false;
+            wallBuildHero = null;
+            wallBuildTile2 = null;
+            
+            deselect();
+            checkAndAutoPass();
+            return true;
+        }
+
+        function tryBuildWallAt(x, z, wallPlacement) {
+            // Helper function for AI to build walls at tile coordinates
+            // Converts tile position to edge position and calls tryBuildWallAtEdge
+            // For 1x2 walls, wallPlacement should contain x2, z2 for the second tile
+            if (!wallBuildMode || !wallBuildHero) return false;
+            
+            const hero = wallBuildHero;
+            const dx = x - hero.x;
+            const dz = z - hero.z;
+            
+            let edgeX = x;
+            let edgeZ = z;
+            let direction = 'n';
+            let half = 'left';
+            
+            // For 1x2 walls, determine edges that span both tiles
+            if (wallBuildSize === 2 && wallPlacement && wallPlacement.x2 !== undefined && wallPlacement.z2 !== undefined) {
+                const x2 = wallPlacement.x2;
+                const z2 = wallPlacement.z2;
+                const spanDx = x2 - x;
+                const spanDz = z2 - z;
+                
+                // Store second tile for straight wall logic
+                wallBuildTile2 = {x: x2, z: z2};
+                
+                // Determine if wall spans horizontally or vertically
+                if (spanDx !== 0 && spanDz === 0) {
+                    // Horizontal span: tiles (x,z) and (x+spanDx,z)
+                    // Use a horizontal edge (north or south) that spans both tiles
+                    // Choose the edge closest to hero or facing away from hero
+                    if (dz <= 0) {
+                        // Hero is north or same row - use north edge
+                        edgeX = x;
+                        edgeZ = z;
+                        direction = 'n';
+                        half = spanDx > 0 ? 'right' : 'left'; // Extend east or west
+                    } else {
+                        // Hero is south - use south edge
+                        edgeX = x;
+                        edgeZ = z;
+                        direction = 's';
+                        half = spanDx > 0 ? 'right' : 'left';
+                    }
+                } else if (spanDx === 0 && spanDz !== 0) {
+                    // Vertical span: tiles (x,z) and (x,z+spanDz)
+                    // Use a vertical edge (east or west) that spans both tiles
+                    if (dx <= 0) {
+                        // Hero is west or same column - use west edge
+                        edgeX = x;
+                        edgeZ = z;
+                        direction = 'w';
+                        half = spanDz > 0 ? 'bottom' : 'top'; // Extend south or north
+                    } else {
+                        // Hero is east - use east edge
+                        edgeX = x;
+                        edgeZ = z;
+                        direction = 'e';
+                        half = spanDz > 0 ? 'bottom' : 'top';
+                    }
+                } else {
+                    // Fallback: treat as single tile
+                    wallBuildTile2 = null;
+                    if (Math.abs(dx) > Math.abs(dz)) {
+                        edgeX = x;
+                        edgeZ = z;
+                        direction = dx > 0 ? 'w' : 'e';
+                        half = 'top';
+                    } else {
+                        edgeX = x;
+                        edgeZ = z;
+                        direction = dz > 0 ? 'n' : 's';
+                        half = 'left';
+                    }
+                }
+            } else {
+                // Not a straight wall - clear tile2
+                wallBuildTile2 = null;
+                // Single tile wall (1x1) - determine edge based on relative position
+                if (dx === 0 && dz === 0) {
+                    // Building on hero's own tile - use north edge as default
+                    edgeX = hero.x;
+                    edgeZ = hero.z;
+                    direction = 'n';
+                    half = 'left';
+                } else if (Math.abs(dx) > Math.abs(dz)) {
+                    // Horizontal movement - build on vertical edge
+                    if (dx > 0) {
+                        // Target is east - build on west edge of target tile
+                        edgeX = x;
+                        edgeZ = z;
+                        direction = 'w';
+                        half = 'top';
+                    } else {
+                        // Target is west - build on east edge of target tile
+                        edgeX = x;
+                        edgeZ = z;
+                        direction = 'e';
+                        half = 'top';
+                    }
+                } else {
+                    // Vertical movement - build on horizontal edge
+                    if (dz > 0) {
+                        // Target is south - build on north edge of target tile
+                        edgeX = x;
+                        edgeZ = z;
+                        direction = 'n';
+                        half = 'left';
+                    } else {
+                        // Target is north - build on south edge of target tile
+                        edgeX = x;
+                        edgeZ = z;
+                        direction = 's';
+                        half = 'left';
+                    }
+                }
+            }
+            
+            // Try to build the wall
+            return tryBuildWallAtEdge(edgeX, edgeZ, direction, half);
+        }
+
+        function showReceiveEnergyUI() {
+            if (!selectedUnit) return;
+            if (selectedUnit.owner !== currentPlayer) return; // Security check
+            if (selectedUnit.type !== 'hero' && selectedUnit.type !== 'transport') {
+                log("Only Hero and Transport can receive energy.");
+                return;
+            }
+            if (selectedUnit.hasMoved) {
+                log("Unit exhausted (already moved).");
+                return;
+            }
+
+            // Find all adjacent spires and transports
+            const mySpires = spires.filter(s => s.owner === selectedUnit.owner);
+            const myTransports = units.filter(u => u.owner === selectedUnit.owner && u.type === 'transport');
+            
+            const adjacentSpires = mySpires.filter(s => isAdjacent(selectedUnit, s) && s.storedEnergy > 0);
+            // Transports can only receive from spires, heroes can receive from spires and transports
+            const adjacentTransports = selectedUnit.type === 'hero' 
+                ? myTransports.filter(t => isAdjacent(selectedUnit, t) && t.energy > 0)
+                : [];
+            
+            if (adjacentSpires.length === 0 && adjacentTransports.length === 0) {
+                log("No adjacent Spires or Transports with energy available.");
+                return;
+            }
+
+            // Populate the UI
+            const container = document.getElementById('receive-energy-sources');
+            container.innerHTML = '';
+            
+            adjacentSpires.forEach((spire, index) => {
+                const item = document.createElement('div');
+                item.className = 'energy-source-item';
+                item.innerHTML = `
+                    <label>Spire at [${spire.x},${spire.z}]</label>
+                    <div class="source-info">
+                        <span>Available: ${spire.storedEnergy}</span>
+                        <span>Max: 10</span>
+                    </div>
+                    <input type="number" 
+                           id="spire-energy-${index}" 
+                           min="0" 
+                           max="${Math.min(spire.storedEnergy, 10)}" 
+                           value="0" 
+                           data-type="spire" 
+                           data-index="${spires.indexOf(spire)}" />
+                `;
+                container.appendChild(item);
+            });
+            
+            adjacentTransports.forEach((transport, index) => {
+                const item = document.createElement('div');
+                item.className = 'energy-source-item';
+                item.innerHTML = `
+                    <label>Transport at [${transport.x},${transport.z}]</label>
+                    <div class="source-info">
+                        <span>Available: ${transport.energy}</span>
+                    </div>
+                    <input type="number" 
+                           id="transport-energy-${index}" 
+                           min="0" 
+                           max="${transport.energy}" 
+                           value="0" 
+                           data-type="transport" 
+                           data-id="${transport.id}" />
+                `;
+                container.appendChild(item);
+            });
+
+            // Show the container
+            document.getElementById('receive-energy-container').style.display = 'block';
+        }
+
+        function confirmReceiveEnergy() {
+            if (!selectedUnit || (selectedUnit.type !== 'hero' && selectedUnit.type !== 'transport') || selectedUnit.owner !== currentPlayer) return;
+            if (selectedUnit.hasMoved) {
+                log("Unit exhausted (already moved).");
+                return;
+            }
+
+            const container = document.getElementById('receive-energy-sources');
+            const inputs = container.querySelectorAll('input[type="number"]');
+            
+            let totalReceived = 0;
+            const transfers = [];
+
+            inputs.forEach(input => {
+                const amount = parseInt(input.value, 10);
+                if (isNaN(amount) || amount <= 0) return;
+
+                const type = input.getAttribute('data-type');
+                
+                if (type === 'spire') {
+                    const spireIndex = parseInt(input.getAttribute('data-index'), 10);
+                    const spire = spires[spireIndex];
+                    if (!spire || !isAdjacent(selectedUnit, spire)) {
+                        log(`Spire at [${spire.x},${spire.z}] is no longer adjacent.`);
+                        return;
+                    }
+                    
+                    const transferAmount = Math.min(amount, spire.storedEnergy, 10);
+                    if (transferAmount > 0) {
+                        transfers.push({ type: 'spire', source: spire, amount: transferAmount });
+                    }
+                } else if (type === 'transport') {
+                    const transportId = input.getAttribute('data-id');
+                    const transport = units.find(u => u.id === transportId);
+                    if (!transport || !isAdjacent(selectedUnit, transport)) {
+                        log(`Transport is no longer adjacent.`);
+                        return;
+                    }
+                    
+                    const transferAmount = Math.min(amount, transport.energy);
+                    if (transferAmount > 0) {
+                        transfers.push({ type: 'transport', source: transport, amount: transferAmount });
+                    }
+                }
+            });
+
+            if (transfers.length === 0) {
+                log("No energy selected to receive.");
+                document.getElementById('receive-energy-container').style.display = 'none';
+                return;
+            }
+
+            // Track spire updates for synchronization
+            const spireUpdates = [];
+            
+            // Process transfers
+            transfers.forEach(transfer => {
+                transfer.source[transfer.type === 'spire' ? 'storedEnergy' : 'energy'] -= transfer.amount;
+                selectedUnit.energy += transfer.amount;
+                totalReceived += transfer.amount;
+                
+                // Update energy label for transport if it's the source
+                if (transfer.type === 'transport') {
+                    updateEnergyLabel(transfer.source);
+                }
+                
+                // Track spire energy changes
+                if (transfer.type === 'spire') {
+                    spireUpdates.push({
+                        x: transfer.source.x,
+                        z: transfer.source.z,
+                        storedEnergy: transfer.source.storedEnergy
+                    });
+                }
+                
+                const sourceName = transfer.type === 'spire' 
+                    ? `Spire at [${transfer.source.x},${transfer.source.z}]`
+                    : `Transport at [${transfer.source.x},${transfer.source.z}]`;
+                log(`Received ${transfer.amount} energy from ${sourceName}.`);
+            });
+
+            const unitType = selectedUnit.type === 'hero' ? 'Hero' : 'Transport';
+            log(`${unitType} received ${totalReceived} total energy.`);
+            selectedUnit.hasMoved = true;
+            updateEnergyLabel(selectedUnit);
+            
+            // Send receive energy action to server in multiplayer
+            if (isMultiplayer) {
+                sendGameAction('receiveEnergy', {
+                    unitId: selectedUnit.id,
+                    energy: selectedUnit.energy,
+                    hasMoved: selectedUnit.hasMoved,
+                    spireUpdates: spireUpdates
+                });
+            }
+            
+            document.getElementById('receive-energy-container').style.display = 'none';
+            deselect();
+            checkAndAutoPass();
+        }
+
+        function transferEnergyToHero() {
+            if (!selectedUnit || selectedUnit.type !== 'transport') return;
+            if (selectedUnit.owner !== currentPlayer) return; // Security check
+            if (selectedUnit.hasMoved) {
+                log("Unit exhausted (already moved).");
+                return;
+            }
+
+            const myHero = units.find(u => u.owner === selectedUnit.owner && u.type === 'hero');
+            if (!myHero) {
+                log("No Hero found.");
+                return;
+            }
+
+            if (!isAdjacent(selectedUnit, myHero)) {
+                log("Hero is not adjacent.");
+                return;
+            }
+
+            // Get transfer amount from input
+            const input = document.getElementById('energy-transfer-amount');
+            const requestedAmount = parseInt(input.value, 10);
+            
+            if (isNaN(requestedAmount) || requestedAmount <= 0) {
+                log("Invalid transfer amount.");
+                return;
+            }
+
+            const maxTransfer = selectedUnit.energy;
+            if (maxTransfer <= 0) {
+                log("Transport has no energy to transfer.");
+                return;
+            }
+
+            const transfer = Math.min(requestedAmount, maxTransfer);
+            
+            selectedUnit.energy -= transfer;
+            myHero.energy += transfer;
+            selectedUnit.hasMoved = true;
+            updateEnergyLabel(selectedUnit);
+            updateEnergyLabel(myHero);
+            log(`Transport transferred ${transfer} energy to Hero.`);
+            
+            // Send transfer action to server in multiplayer
+            if (isMultiplayer) {
+                sendGameAction('transferEnergy', {
+                    unitId: selectedUnit.id,
+                    heroId: myHero.id,
+                    unitEnergy: selectedUnit.energy,
+                    heroEnergy: myHero.energy,
+                    hasMoved: selectedUnit.hasMoved
+                });
+            }
+            
+            // Reset transport if energy depleted
+            if (selectedUnit.energy <= 0) {
+                resetTransport(selectedUnit);
+            }
+            
+            deselect();
+            checkAndAutoPass();
+        }
+
+        function getFreeAdjacent(x, z) {
+            const offsets = [[0,1], [0,-1], [1,0], [-1,0]];
+            offsets.sort(() => Math.random() - 0.5);
+            
+            for (let o of offsets) {
+                const nx = x + o[0];
+                const nz = z + o[1];
+                if (nx >= 0 && nx < BOARD_SIZE && nz >= 0 && nz < BOARD_SIZE) {
+                    if (!units.some(u => u.x === nx && u.z === nz) && 
+                        !spires.some(s => s.x === nx && s.z === nz) &&
+                        !walls.some(w => 
+                            (w.x === nx && w.z === nz) || 
+                            (w.size === 2 && w.x2 === nx && w.z2 === nz)
+                        )) {
+                        return {x: nx, z: nz};
+                    }
+                }
+            }
+            return null;
+        }
+
+        // --- Logic Engine ---
+
+        function isWallBetweenHeroes(h1, h2) {
+            // Check if there's a wall blocking the path between two heroes
+            const dx = h2.x - h1.x;
+            const dz = h2.z - h1.z;
+            
+            // If heroes are on the same tile, no wall can block them
+            if (dx === 0 && dz === 0) {
+                return false;
+            }
+            
+            // For horizontal/vertical adjacency, check the edge between them
+            if (dx === 0) {
+                // Same column - check vertical edge
+                if (dz > 0) {
+                    // h2 is south of h1 - check south edge of h1's tile
+                    return isEdgeBlocked(h1.x, h1.z, 's');
+                } else {
+                    // h2 is north of h1 - check north edge of h1's tile
+                    return isEdgeBlocked(h1.x, h1.z, 'n');
+                }
+            } else if (dz === 0) {
+                // Same row - check horizontal edge
+                if (dx > 0) {
+                    // h2 is east of h1 - check east edge of h1's tile
+                    return isEdgeBlocked(h1.x, h1.z, 'e');
+                } else {
+                    // h2 is west of h1 - check west edge of h1's tile
+                    return isEdgeBlocked(h1.x, h1.z, 'w');
+                }
+            } else {
+                // Diagonal adjacency - check if both edges are blocked
+                // For diagonal, we need to check both the horizontal and vertical edges
+                // If both edges in the direction of h2 are blocked, then attack is blocked
+                let horizontalBlocked = false;
+                let verticalBlocked = false;
+                
+                if (dx > 0) {
+                    // h2 is east - check east edge
+                    horizontalBlocked = isEdgeBlocked(h1.x, h1.z, 'e');
+                } else {
+                    // h2 is west - check west edge
+                    horizontalBlocked = isEdgeBlocked(h1.x, h1.z, 'w');
+                }
+                
+                if (dz > 0) {
+                    // h2 is south - check south edge
+                    verticalBlocked = isEdgeBlocked(h1.x, h1.z, 's');
+                } else {
+                    // h2 is north - check north edge
+                    verticalBlocked = isEdgeBlocked(h1.x, h1.z, 'n');
+                }
+                
+                // For diagonal, attack is blocked if BOTH edges are blocked
+                // (if only one is blocked, there's still a path around)
+                return horizontalBlocked && verticalBlocked;
+            }
+        }
+
+        function checkAdjacencyEvents() {
+            if (isGameOver) return;
+
+            const p1Hero = units.find(u => u.owner === 1 && u.type === 'hero');
+            const p2Hero = units.find(u => u.owner === 2 && u.type === 'hero');
+
+            if (p1Hero && p2Hero) {
+                const dx = Math.abs(p1Hero.x - p2Hero.x);
+                const dz = Math.abs(p1Hero.z - p2Hero.z);
+                if (dx <= 1 && dz <= 1 && !(dx===0 && dz===0)) {
+                    // Check if there's a wall between the heroes
+                    if (!isWallBetweenHeroes(p1Hero, p2Hero)) {
+                        resolveCombat(p1Hero, p2Hero);
+                    }
+                }
+            }
+        }
+
+        function resolveCombat(h1, h2) {
+            isGameOver = true;
+            let winner = null;
+            let reason = "";
+
+            if (h1.energy > h2.energy) {
+                winner = h1.owner;
+                reason = `Energy Superiority (${h1.energy} vs ${h2.energy})`;
+            } else if (h2.energy > h1.energy) {
+                winner = h2.owner;
+                reason = `Energy Superiority (${h2.energy} vs ${h1.energy})`;
+            } else {
+                winner = currentPlayer; // Tie-breaker: Current player wins
+                reason = "Tie-breaker: Aggressor Wins";
+            }
+
+            const title = winner === 1 ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
+            const color = winner === 1 ? "#2ecc71" : "#e74c3c";
+            
+            showModal(title, `Winner: Player ${winner}<br>${reason}`, color);
+        }
+
+        function processEndTurn(owner) {
+            if (isGameOver) return;
+
+            // Energy transfers now happen as actions, not automatically
+            updateUI();
+        }
+
+        function incrementSpireEnergy() {
+            if (isGameOver) return;
+            
+            spires.forEach(s => {
+                s.storedEnergy += 1;
+            });
+        }
+
+        function isAdjacent(obj1, obj2) {
+            const dx = Math.abs(obj1.x - obj2.x);
+            const dz = Math.abs(obj1.z - obj2.z);
+            return (dx <= 1 && dz <= 1) && !(dx === 0 && dz === 0);
+        }
+
+        function checkForAvailableActions() {
+            if (isGameOver) return false;
+
+            const playerUnits = units.filter(u => u.owner === currentPlayer);
+            const playerSpires = spires.filter(s => s.owner === currentPlayer);
+
+            for (const unit of playerUnits) {
+                if (unit.hasMoved) continue;
+
+                // Check if unit can move
+                const maxMove = unit.type === 'hero' ? 1 : 2;
+                const moveCost = unit.type === 'transport' ? 1 : 1; // Minimum cost for hero is 1
+                
+                if (unit.energy >= moveCost) {
+                    // Check if there's any valid move destination
+                    for (let dx = -maxMove; dx <= maxMove; dx++) {
+                        for (let dz = -maxMove; dz <= maxMove; dz++) {
+                            if (dx === 0 && dz === 0) continue;
+                            if (Math.abs(dx) > maxMove || Math.abs(dz) > maxMove) continue;
+                            
+                            const nx = unit.x + dx;
+                            const nz = unit.z + dz;
+                            
+                            if (nx < 0 || nx >= BOARD_SIZE || nz < 0 || nz >= BOARD_SIZE) continue;
+                            
+                            // Check if destination is free
+                            if (units.some(u => u.x === nx && u.z === nz)) continue;
+                            if (spires.some(s => s.x === nx && s.z === nz)) continue;
+                            if (walls.some(w => 
+                                (w.x === nx && w.z === nz) || 
+                                (w.size === 2 && w.x2 === nx && w.z2 === nz)
+                            )) continue;
+                            
+                            // Check if unit has enough energy for this move
+                            const dist = Math.max(Math.abs(dx), Math.abs(dz));
+                            const cost = unit.type === 'transport' ? 1 : dist;
+                            if (unit.energy >= cost) {
+                                return true; // Can move
+                            }
+                        }
+                    }
+                }
+
+                // Check if hero can build spire
+                if (unit.type === 'hero' && unit.energy >= 3) {
+                    const adj = getFreeAdjacent(unit.x, unit.z);
+                    if (adj) {
+                        return true; // Can build spire
+                    }
+                }
+
+                // Check if hero can build wall
+                if (unit.type === 'hero') {
+                    const adj = getFreeAdjacent(unit.x, unit.z);
+                    if (adj && unit.energy >= 1) {
+                        return true; // Can build 1x1 wall
+                    }
+                    // Check for 1x2 wall (need 2 energy and 2 adjacent tiles)
+                    if (unit.energy >= 2) {
+                        const offsets = [[0,1], [0,-1], [1,0], [-1,0]];
+                        for (const offset of offsets) {
+                            const nx = unit.x + offset[0];
+                            const nz = unit.z + offset[1];
+                            if (nx >= 0 && nx < BOARD_SIZE && nz >= 0 && nz < BOARD_SIZE) {
+                                const nx2 = nx + offset[0];
+                                const nz2 = nz + offset[1];
+                                if (nx2 >= 0 && nx2 < BOARD_SIZE && nz2 >= 0 && nz2 < BOARD_SIZE) {
+                                    if (!units.some(u => u.x === nx && u.z === nz || u.x === nx2 && u.z === nz2) &&
+                                        !spires.some(s => s.x === nx && s.z === nz || s.x === nx2 && s.z === nz2) &&
+                                        !walls.some(w => 
+                                            (w.x === nx && w.z === nz) || (w.x === nx2 && w.z === nz2) ||
+                                            (w.size === 2 && ((w.x === nx && w.z === nz) || (w.x === nx2 && w.z === nz2) || 
+                                             (w.x2 === nx && w.z2 === nz) || (w.x2 === nx2 && w.z2 === nz2)))
+                                        )) {
+                                        return true; // Can build 1x2 wall
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Check if hero or transport can receive energy from adjacent spires or transports
+                if (unit.type === 'hero' || unit.type === 'transport') {
+                    const myTransports = units.filter(u => u.owner === currentPlayer && u.type === 'transport');
+                    const hasAdjacentSpire = playerSpires.some(s => isAdjacent(unit, s) && s.storedEnergy > 0);
+                    // Transports can only receive from spires, heroes can receive from spires and transports
+                    const hasAdjacentTransport = unit.type === 'hero' 
+                        ? myTransports.some(t => isAdjacent(unit, t) && t.energy > 0)
+                        : false;
+                    if (hasAdjacentSpire || hasAdjacentTransport) {
+                        return true; // Can receive energy
+                    }
+                }
+
+                // Check if transport can transfer energy to hero
+                if (unit.type === 'transport' && unit.energy > 0) {
+                    const myHero = units.find(u => u.owner === currentPlayer && u.type === 'hero');
+                    if (myHero && isAdjacent(unit, myHero)) {
+                        return true; // Can transfer energy
+                    }
+                }
+            }
+
+            return false; // No actions available
+        }
+
+        function checkAndAutoPass() {
+            if (isGameOver) return;
+            
+            setTimeout(() => {
+                if (!checkForAvailableActions()) {
+                    log("No actions available. Turn automatically passed.");
+                    passTurn();
+                }
+            }, 100);
+        }
+
+        function passTurn() {
+            if (isGameOver) return;
+            
+            // In multiplayer, only allow current player to pass
+            if (isMultiplayer && currentPlayer !== myPlayerNumber) {
+                return;
+            }
+            
+            // In AI mode, prevent human from passing when it's AI's turn
+            // (button is disabled, but double-check here)
+            if (isPlayingAI && currentPlayer === 2) {
+                // Allow AI to pass programmatically
+                // Button click is already prevented by disabled state
+            }
+            
+            deselect();
+            processEndTurn(currentPlayer);
+            
+            units.forEach(u => u.hasMoved = false);
+            
+            // Increment spire energy after complete turn cycle (both players finished)
+            // Only increment when switching from player 2 back to player 1
+            if (currentPlayer === 2) {
+                incrementSpireEnergy();
+            }
+            
+            // Switch to other player
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            
+            // Send turn change to server in multiplayer
+            if (isMultiplayer) {
+                sendGameAction('turnChange', { currentPlayer });
+            }
+            
+            // Update turn indicator
+            if (isPlayingAI && currentPlayer === 2) {
+                document.getElementById('turn-indicator').innerText = `AI Turn (${aiDifficulty.charAt(0).toUpperCase() + aiDifficulty.slice(1)})`;
+                document.getElementById('btn-end-turn').disabled = true;
+            } else {
+                document.getElementById('turn-indicator').innerText = `Player ${currentPlayer} Turn`;
+                document.getElementById('btn-end-turn').disabled = false;
+            }
+            document.getElementById('turn-indicator').style.color = currentPlayer === 1 ? "white" : "#e74c3c";
+            
+            updateUI();
+            
+            // Check if current player has any available actions
+            checkAndAutoPass();
+            
+            // If it's AI's turn, trigger AI logic
+            if (isPlayingAI && currentPlayer === 2 && !isGameOver) {
+                setTimeout(() => {
+                    executeAITurn();
+                }, 500); // Small delay for visual feedback
+            }
+        }
+
+
+        function getMoveTowards(unit, tx, tz, maxSteps) {
+            let bestX = unit.x;
+            let bestZ = unit.z;
+            let minDst = 999;
+
+            for (let x = -maxSteps; x <= maxSteps; x++) {
+                for (let z = -maxSteps; z <= maxSteps; z++) {
+                    const nx = unit.x + x;
+                    const nz = unit.z + z;
+                    
+                    if (nx < 0 || nx >= BOARD_SIZE || nz < 0 || nz >= BOARD_SIZE) continue;
+                    if (Math.abs(x) > maxSteps || Math.abs(z) > maxSteps) continue;
+
+                    if (units.some(u => u !== unit && u.x === nx && u.z === nz)) continue;
+                    if (spires.some(s => s.x === nx && s.z === nz)) continue;
+                    if (walls.some(w => 
+                        (w.x === nx && w.z === nz) || 
+                        (w.size === 2 && w.x2 === nx && w.z2 === nz)
+                    )) continue;
+
+                    const d = Math.abs(nx - tx) + Math.abs(nz - tz);
+                    
+                    if (d < minDst) {
+                        minDst = d;
+                        bestX = nx;
+                        bestZ = nz;
+                    }
+                }
+            }
+            if (bestX === unit.x && bestZ === unit.z) return null;
+            return {x: bestX, z: bestZ};
+        }
+        
+        function getDist(o1, o2) {
+            return Math.abs(o1.x - o2.x) + Math.abs(o1.z - o2.z);
+        }
+        
+        function getNearestObject(unit, targets) {
+            let min = 999;
+            let best = null;
+            targets.forEach(t => {
+                const d = getDist(unit, t);
+                if (d < min) {
+                    min = d;
+                    best = t;
+                }
+            });
+            return best;
+        }
+        
+        function findGoodWallPlacement(hero, humanHero, aiSpires, aiWalls, preferDefensive) {
+            // Find adjacent tiles that would be good for wall placement
+            const offsets = [[0,1], [0,-1], [1,0], [-1,0]];
+            const candidates = [];
+            
+            offsets.forEach(offset => {
+                const nx = hero.x + offset[0];
+                const nz = hero.z + offset[1];
+                
+                if (nx >= 0 && nx < BOARD_SIZE && nz >= 0 && nz < BOARD_SIZE) {
+                    // Check if tile is free
+                    if (!units.some(u => u.x === nx && u.z === nz) && 
+                        !spires.some(s => s.x === nx && s.z === nz) &&
+                        !walls.some(w => 
+                            (w.x === nx && w.z === nz) || 
+                            (w.size === 2 && w.x2 === nx && w.z2 === nz)
+                        )) {
+                        
+                        // Score this placement
+                        let score = 0;
+                        
+                        if (preferDefensive && humanHero) {
+                            // Defensive: prefer walls between hero and enemy, or protecting spires
+                            const distToEnemy = Math.abs(nx - humanHero.x) + Math.abs(nz - humanHero.z);
+                            if (distToEnemy <= 2) {
+                                score += 5; // Block enemy approach
+                            }
+                            
+                            // Check if this protects a spire
+                            const nearbySpire = aiSpires.find(s => {
+                                const dist = Math.abs(s.x - nx) + Math.abs(s.z - nz);
+                                return dist <= 1;
+                            });
+                            if (nearbySpire) {
+                                score += 3; // Protect spire
+                            }
+                        } else {
+                            // Aggressive: prefer walls that block enemy path or create chokepoints
+                            if (humanHero) {
+                                const distToEnemy = Math.abs(nx - humanHero.x) + Math.abs(nz - humanHero.z);
+                                if (distToEnemy <= 1) {
+                                    score += 3; // Block enemy directly
+                                }
+                            }
+                        }
+                        
+                        // Check if we can build 1x2 wall (higher value)
+                        const nx2 = nx + offset[0];
+                        const nz2 = nz + offset[1];
+                        if (nx2 >= 0 && nx2 < BOARD_SIZE && nz2 >= 0 && nz2 < BOARD_SIZE) {
+                            if (!units.some(u => u.x === nx2 && u.z === nz2) && 
+                                !spires.some(s => s.x === nx2 && s.z === nz2) &&
+                                !walls.some(w => 
+                                    (w.x === nx2 && w.z === nz2) || 
+                                    (w.size === 2 && w.x2 === nx2 && w.z2 === nz2)
+                                )) {
+                                score += 2; // Can build 1x2 wall
+                                candidates.push({x: nx, z: nz, x2: nx2, z2: nz2, size: 2, score: score});
+                                return;
+                            }
+                        }
+                        
+                        candidates.push({x: nx, z: nz, size: 1, score: score});
+                    }
+                }
+            });
+            
+            // Return best candidate
+            if (candidates.length === 0) return null;
+            candidates.sort((a, b) => b.score - a.score);
+            return candidates[0];
+        }
+        
+        // --- AI Logic ---
+        
+        function executeAITurn() {
+            if (isGameOver || currentPlayer !== 2 || !isPlayingAI) return;
+            
+            const aiUnits = units.filter(u => u.owner === 2);
+            const aiSpires = spires.filter(s => s.owner === 2);
+            const aiWalls = walls.filter(w => w.owner === 2);
+            const humanHero = units.find(u => u.owner === 1 && u.type === 'hero');
+            const aiHero = units.find(u => u.owner === 2 && u.type === 'hero');
+            const aiTransport = units.find(u => u.owner === 2 && u.type === 'transport');
+            
+            if (!aiHero) return;
+            
+            let actionsTaken = 0;
+            const maxActions = 10; // Prevent infinite loops
+            
+            // Strategy based on difficulty
+            if (aiDifficulty === 'easy') {
+                // Aggressive: Move toward enemy, attack quickly
+                actionsTaken = executeAggressiveAI(aiUnits, aiSpires, aiWalls, humanHero, aiHero, aiTransport, actionsTaken, maxActions);
+            } else if (aiDifficulty === 'hard') {
+                // Conservative: Build spires, gather energy, defensive positioning
+                actionsTaken = executeConservativeAI(aiUnits, aiSpires, aiWalls, humanHero, aiHero, aiTransport, actionsTaken, maxActions);
+            } else {
+                // Medium: Balanced approach
+                actionsTaken = executeBalancedAI(aiUnits, aiSpires, aiWalls, humanHero, aiHero, aiTransport, actionsTaken, maxActions);
+            }
+            
+            // End AI turn after a short delay
+            setTimeout(() => {
+                if (currentPlayer === 2 && !isGameOver) {
+                    passTurn();
+                }
+            }, 1000);
+        }
+        
+        function executeAggressiveAI(aiUnits, aiSpires, aiWalls, humanHero, aiHero, aiTransport, actionsTaken, maxActions) {
+            // Aggressive strategy: prioritize moving toward enemy hero
+            // Minimal wall building - only if very close to enemy or blocking path
+            
+            // 1. Move hero toward human hero if possible
+            if (aiHero && !aiHero.hasMoved && humanHero) {
+                const move = getMoveTowards(aiHero, humanHero.x, humanHero.z, 1);
+                if (move && aiHero.energy >= 1) {
+                    tryMove(aiHero, move.x, move.z);
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 2. Move transport toward hero to support
+            if (aiTransport && !aiTransport.hasMoved && aiHero) {
+                const move = getMoveTowards(aiTransport, aiHero.x, aiHero.z, 2);
+                if (move && aiTransport.energy >= 1) {
+                    tryMove(aiTransport, move.x, move.z);
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 3. Transfer energy from transport to hero if adjacent
+            if (aiTransport && !aiTransport.hasMoved && aiTransport.energy > 0 && aiHero) {
+                if (isAdjacent(aiTransport, aiHero)) {
+                    selectedUnit = aiTransport;
+                    const transferAmount = Math.min(aiTransport.energy, 5); // Transfer up to 5
+                    document.getElementById('energy-transfer-amount').value = transferAmount;
+                    transferEnergyToHero();
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 4. Build wall only if very close to enemy and need to block (low priority)
+            if (aiHero && !aiHero.hasMoved && humanHero && aiHero.energy >= 1) {
+                const distToEnemy = getDist(aiHero, humanHero);
+                // Only build walls if enemy is very close (distance 1-2) and we have extra energy
+                if (distToEnemy <= 2 && aiHero.energy >= 3 && aiWalls.length < 2) {
+                    const wallPlacement = findGoodWallPlacement(aiHero, humanHero, aiSpires, aiWalls, false);
+                    if (wallPlacement && wallPlacement.score >= 3) {
+                        wallBuildMode = true;
+                        wallBuildHero = aiHero;
+                        wallBuildSize = wallPlacement.size;
+                        selectedUnit = aiHero;
+                        tryBuildWallAt(wallPlacement.x, wallPlacement.z, wallPlacement);
+                        actionsTaken++;
+                        if (actionsTaken >= maxActions) return actionsTaken;
+                    }
+                }
+            }
+            
+            // 5. Receive energy from spires if adjacent (but prioritize movement)
+            if (aiHero && !aiHero.hasMoved) {
+                const adjacentSpire = aiSpires.find(s => isAdjacent(aiHero, s) && s.storedEnergy > 0);
+                if (adjacentSpire && aiHero.energy < 5) { // Only if energy is low
+                    selectedUnit = aiHero;
+                    showReceiveEnergyUI();
+                    setTimeout(() => {
+                        const container = document.getElementById('receive-energy-sources');
+                        if (container) {
+                            const input = container.querySelector('input[type="number"]');
+                            if (input) {
+                                input.value = Math.min(adjacentSpire.storedEnergy, 3); // Take 3 energy
+                                confirmReceiveEnergy();
+                            }
+                        }
+                    }, 200);
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            return actionsTaken;
+        }
+        
+        function executeConservativeAI(aiUnits, aiSpires, aiWalls, humanHero, aiHero, aiTransport, actionsTaken, maxActions) {
+            // Conservative strategy: build spires, gather energy, defensive positioning
+            // High priority on defensive wall building
+            
+            // 1. Build defensive walls if enemy is approaching or to protect spires
+            if (aiHero && !aiHero.hasMoved && aiHero.energy >= 1 && aiWalls.length < 4) {
+                const wallPlacement = findGoodWallPlacement(aiHero, humanHero, aiSpires, aiWalls, true);
+                if (wallPlacement) {
+                    // Conservative: build walls if enemy is close OR to protect spires
+                    const distToEnemy = humanHero ? getDist(aiHero, humanHero) : 999;
+                    const shouldBuildWall = wallPlacement.score >= 3 || 
+                                          (distToEnemy <= 3 && aiHero.energy >= 2) ||
+                                          (aiSpires.length > 0 && wallPlacement.score >= 2);
+                    
+                    if (shouldBuildWall && aiHero.energy >= wallPlacement.size) {
+                        wallBuildMode = true;
+                        wallBuildHero = aiHero;
+                        wallBuildSize = wallPlacement.size;
+                        selectedUnit = aiHero;
+                        tryBuildWallAt(wallPlacement.x, wallPlacement.z, wallPlacement);
+                        actionsTaken++;
+                        if (actionsTaken >= maxActions) return actionsTaken;
+                    }
+                }
+            }
+            
+            // 2. Build spires if hero has enough energy and there's space
+            if (aiHero && !aiHero.hasMoved && aiHero.energy >= 3) {
+                const freeAdjacent = getFreeAdjacent(aiHero.x, aiHero.z);
+                if (freeAdjacent && aiSpires.length < 3) { // Limit spire count
+                    buildMode = true;
+                    buildModeHero = aiHero;
+                    selectedUnit = aiHero;
+                    tryBuildSpireAt(freeAdjacent.x, freeAdjacent.z);
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 3. Receive energy from spires (prioritize energy gathering)
+            if (aiHero && !aiHero.hasMoved) {
+                const adjacentSpire = aiSpires.find(s => isAdjacent(aiHero, s) && s.storedEnergy > 0);
+                if (adjacentSpire) {
+                    selectedUnit = aiHero;
+                    showReceiveEnergyUI();
+                    setTimeout(() => {
+                        const container = document.getElementById('receive-energy-sources');
+                        if (container) {
+                            const input = container.querySelector('input[type="number"]');
+                            if (input) {
+                                input.value = Math.min(adjacentSpire.storedEnergy, 5); // Take more energy
+                                confirmReceiveEnergy();
+                            }
+                        }
+                    }, 200);
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 4. Move transport to collect energy from spires
+            if (aiTransport && !aiTransport.hasMoved && aiTransport.energy < 3) {
+                const nearestSpire = getNearestObject(aiTransport, aiSpires.filter(s => s.storedEnergy > 0));
+                if (nearestSpire) {
+                    const move = getMoveTowards(aiTransport, nearestSpire.x, nearestSpire.z, 2);
+                    if (move && aiTransport.energy >= 1) {
+                        tryMove(aiTransport, move.x, move.z);
+                        actionsTaken++;
+                        if (actionsTaken >= maxActions) return actionsTaken;
+                    }
+                }
+            }
+            
+            // 5. Receive energy from spires with transport
+            if (aiTransport && !aiTransport.hasMoved) {
+                const adjacentSpire = aiSpires.find(s => isAdjacent(aiTransport, s) && s.storedEnergy > 0);
+                if (adjacentSpire) {
+                    selectedUnit = aiTransport;
+                    showReceiveEnergyUI();
+                    setTimeout(() => {
+                        const container = document.getElementById('receive-energy-sources');
+                        if (container) {
+                            const input = container.querySelector('input[type="number"]');
+                            if (input) {
+                                input.value = Math.min(adjacentSpire.storedEnergy, 5);
+                                confirmReceiveEnergy();
+                            }
+                        }
+                    }, 200);
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 6. Transfer energy from transport to hero (defensive support)
+            if (aiTransport && !aiTransport.hasMoved && aiTransport.energy > 0 && aiHero) {
+                if (isAdjacent(aiTransport, aiHero)) {
+                    selectedUnit = aiTransport;
+                    const transferAmount = Math.min(aiTransport.energy, 3); // Conservative transfer
+                    document.getElementById('energy-transfer-amount').value = transferAmount;
+                    transferEnergyToHero();
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 7. Move hero defensively (away from enemy if too close, or toward if safe)
+            if (aiHero && !aiHero.hasMoved && humanHero) {
+                const distToEnemy = getDist(aiHero, humanHero);
+                let targetX = aiHero.x;
+                let targetZ = aiHero.z;
+                
+                if (distToEnemy <= 2 && aiHero.energy < humanHero.energy) {
+                    // Too close and weaker - move away
+                    const move = getMoveTowards(aiHero, humanHero.x, humanHero.z, 1);
+                    if (move) {
+                        // Move in opposite direction
+                        const dx = aiHero.x - humanHero.x;
+                        const dz = aiHero.z - humanHero.z;
+                        const newX = Math.max(0, Math.min(BOARD_SIZE - 1, aiHero.x + Math.sign(dx)));
+                        const newZ = Math.max(0, Math.min(BOARD_SIZE - 1, aiHero.z + Math.sign(dz)));
+                        const moveAway = getMoveTowards(aiHero, newX, newZ, 1);
+                        if (moveAway && aiHero.energy >= 1) {
+                            tryMove(aiHero, moveAway.x, moveAway.z);
+                            actionsTaken++;
+                        }
+                    }
+                } else if (distToEnemy > 3 && aiHero.energy >= 5) {
+                    // Safe distance and good energy - move closer slowly
+                    const move = getMoveTowards(aiHero, humanHero.x, humanHero.z, 1);
+                    if (move && aiHero.energy >= 1) {
+                        tryMove(aiHero, move.x, move.z);
+                        actionsTaken++;
+                    }
+                }
+            }
+            
+            return actionsTaken;
+        }
+        
+        function executeBalancedAI(aiUnits, aiSpires, aiWalls, humanHero, aiHero, aiTransport, actionsTaken, maxActions) {
+            // Balanced strategy: mix of aggressive and conservative
+            // Moderate wall building for strategic control
+            
+            // 1. Build walls strategically (moderate priority)
+            if (aiHero && !aiHero.hasMoved && aiHero.energy >= 2 && aiWalls.length < 3) {
+                const wallPlacement = findGoodWallPlacement(aiHero, humanHero, aiSpires, aiWalls, false);
+                if (wallPlacement) {
+                    const distToEnemy = humanHero ? getDist(aiHero, humanHero) : 999;
+                    // Balanced: build walls if good strategic position (blocking enemy or protecting spires)
+                    const shouldBuildWall = (wallPlacement.score >= 4 && aiHero.energy >= wallPlacement.size) ||
+                                          (distToEnemy <= 2 && wallPlacement.score >= 3 && aiHero.energy >= wallPlacement.size + 1);
+                    
+                    if (shouldBuildWall) {
+                        wallBuildMode = true;
+                        wallBuildHero = aiHero;
+                        wallBuildSize = wallPlacement.size;
+                        selectedUnit = aiHero;
+                        tryBuildWallAt(wallPlacement.x, wallPlacement.z, wallPlacement);
+                        actionsTaken++;
+                        if (actionsTaken >= maxActions) return actionsTaken;
+                    }
+                }
+            }
+            
+            // 2. Build spire if energy is high and we don't have many
+            if (aiHero && !aiHero.hasMoved && aiHero.energy >= 4 && aiSpires.length < 2) {
+                const freeAdjacent = getFreeAdjacent(aiHero.x, aiHero.z);
+                if (freeAdjacent) {
+                    buildMode = true;
+                    buildModeHero = aiHero;
+                    selectedUnit = aiHero;
+                    tryBuildSpireAt(freeAdjacent.x, freeAdjacent.z);
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 3. Receive energy if energy is low or if we have good spire energy
+            if (aiHero && !aiHero.hasMoved) {
+                const adjacentSpire = aiSpires.find(s => isAdjacent(aiHero, s) && s.storedEnergy > 0);
+                if (adjacentSpire && (aiHero.energy < 4 || adjacentSpire.storedEnergy >= 5)) {
+                    selectedUnit = aiHero;
+                    showReceiveEnergyUI();
+                    setTimeout(() => {
+                        const container = document.getElementById('receive-energy-sources');
+                        if (container) {
+                            const input = container.querySelector('input[type="number"]');
+                            if (input) {
+                                input.value = Math.min(adjacentSpire.storedEnergy, 4);
+                                confirmReceiveEnergy();
+                            }
+                        }
+                    }, 200);
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 4. Move hero toward enemy if we have good energy advantage
+            if (aiHero && !aiHero.hasMoved && humanHero) {
+                const distToEnemy = getDist(aiHero, humanHero);
+                if (aiHero.energy >= humanHero.energy + 1 && distToEnemy > 2) {
+                    const move = getMoveTowards(aiHero, humanHero.x, humanHero.z, 1);
+                    if (move && aiHero.energy >= 1) {
+                        tryMove(aiHero, move.x, move.z);
+                        actionsTaken++;
+                        if (actionsTaken >= maxActions) return actionsTaken;
+                    }
+                }
+            }
+            
+            // 5. Move transport to support hero
+            if (aiTransport && !aiTransport.hasMoved && aiHero) {
+                const move = getMoveTowards(aiTransport, aiHero.x, aiHero.z, 2);
+                if (move && aiTransport.energy >= 1) {
+                    tryMove(aiTransport, move.x, move.z);
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 6. Transfer energy from transport to hero
+            if (aiTransport && !aiTransport.hasMoved && aiTransport.energy > 0 && aiHero) {
+                if (isAdjacent(aiTransport, aiHero)) {
+                    selectedUnit = aiTransport;
+                    const transferAmount = Math.min(aiTransport.energy, 4);
+                    document.getElementById('energy-transfer-amount').value = transferAmount;
+                    transferEnergyToHero();
+                    actionsTaken++;
+                    if (actionsTaken >= maxActions) return actionsTaken;
+                }
+            }
+            
+            // 7. Receive energy with transport if near spire
+            if (aiTransport && !aiTransport.hasMoved) {
+                const adjacentSpire = aiSpires.find(s => isAdjacent(aiTransport, s) && s.storedEnergy > 0);
+                if (adjacentSpire && aiTransport.energy < 4) {
+                    selectedUnit = aiTransport;
+                    showReceiveEnergyUI();
+                    setTimeout(() => {
+                        const container = document.getElementById('receive-energy-sources');
+                        if (container) {
+                            const input = container.querySelector('input[type="number"]');
+                            if (input) {
+                                input.value = Math.min(adjacentSpire.storedEnergy, 4);
+                                confirmReceiveEnergy();
+                            }
+                        }
+                    }, 200);
+                    actionsTaken++;
+                }
+            }
+            
+            return actionsTaken;
+        }
+
+        // --- Utils ---
+
+        function updateUI() {
+            const popup = document.getElementById('unit-popup');
+            const actionsPanel = document.getElementById('actions-panel');
+            const buildBtn = document.getElementById('btn-build');
+            const buildWall1x1Btn = document.getElementById('btn-build-wall-1x1');
+            const buildWall1x2Btn = document.getElementById('btn-build-wall-1x2');
+            const receiveEnergyBtn = document.getElementById('btn-receive-energy');
+            const transferEnergyBtn = document.getElementById('btn-transfer-energy');
+            
+            if (!selectedUnit && !selectedSpire) {
+                // Hide actions panel when nothing is selected
+                actionsPanel.style.display = 'none';
+                buildBtn.disabled = true;
+                buildWall1x1Btn.disabled = true;
+                buildWall1x2Btn.disabled = true;
+                receiveEnergyBtn.disabled = true;
+                transferEnergyBtn.disabled = true;
+                document.getElementById('transfer-energy-container').style.display = 'none';
+                document.getElementById('receive-energy-container').style.display = 'none';
+                return;
+            }
+
+            // Populate Popup
+            if (selectedUnit) {
+                const isEnemy = selectedUnit.owner === 2;
+                popup.style.display = 'block';
+                popup.className = isEnemy ? 'enemy' : ''; // For red border
+                
+                popup.innerHTML = `
+                    <div class="popup-title">${isEnemy ? "ENEMY " : ""}${selectedUnit.type}</div>
+                    <div class="popup-row"><span>Energy:</span> <strong>${selectedUnit.energy}</strong></div>
+                `;
+
+                // Show actions panel and enable buttons ONLY if current player's unit
+                if (selectedUnit.owner === currentPlayer) {
+                    // Show actions panel for current player's units
+                    actionsPanel.style.display = 'block';
+                    // Build Spire button (Hero only, disabled if already in build mode)
+                    if (buildMode || wallBuildMode) {
+                        buildBtn.disabled = true;
+                    } else if (selectedUnit.type === 'hero' && selectedUnit.energy >= 3 && !selectedUnit.hasMoved) {
+                        buildBtn.disabled = false;
+                    } else {
+                        buildBtn.disabled = true;
+                    }
+
+                    // Build Wall buttons (Hero only)
+                    if (buildMode || wallBuildMode) {
+                        buildWall1x1Btn.disabled = true;
+                        buildWall1x2Btn.disabled = true;
+                    } else if (selectedUnit.type === 'hero' && !selectedUnit.hasMoved) {
+                        // Check if hero can build 1x1 wall (needs 1 energy and adjacent free tile)
+                        const canBuild1x1 = selectedUnit.energy >= 1 && getFreeAdjacent(selectedUnit.x, selectedUnit.z) !== null;
+                        buildWall1x1Btn.disabled = !canBuild1x1;
+                        
+                        // Check if hero can build 1x2 wall (needs 2 energy and 2 adjacent free tiles)
+                        let canBuild1x2 = false;
+                        if (selectedUnit.energy >= 2) {
+                            const offsets = [[0,1], [0,-1], [1,0], [-1,0]];
+                            for (const offset of offsets) {
+                                const nx = selectedUnit.x + offset[0];
+                                const nz = selectedUnit.z + offset[1];
+                                if (nx >= 0 && nx < BOARD_SIZE && nz >= 0 && nz < BOARD_SIZE) {
+                                    const nx2 = nx + offset[0];
+                                    const nz2 = nz + offset[1];
+                                    if (nx2 >= 0 && nx2 < BOARD_SIZE && nz2 >= 0 && nz2 < BOARD_SIZE) {
+                                        if (!units.some(u => u.x === nx && u.z === nz || u.x === nx2 && u.z === nz2) &&
+                                            !spires.some(s => s.x === nx && s.z === nz || s.x === nx2 && s.z === nz2) &&
+                                            !walls.some(w => w.x === nx && w.z === nz || w.x === nx2 && w.z === nz2)) {
+                                            canBuild1x2 = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        buildWall1x2Btn.disabled = !canBuild1x2;
+                    } else {
+                        buildWall1x1Btn.disabled = true;
+                        buildWall1x2Btn.disabled = true;
+                    }
+
+                    // Receive Energy button (Hero and Transport, must be adjacent to spire or transport)
+                    if ((selectedUnit.type === 'hero' || selectedUnit.type === 'transport') && !selectedUnit.hasMoved) {
+                        const mySpires = spires.filter(s => s.owner === currentPlayer);
+                        const myTransports = units.filter(u => u.owner === currentPlayer && u.type === 'transport');
+                        
+                        const hasAdjacentSpire = mySpires.some(s => isAdjacent(selectedUnit, s) && s.storedEnergy > 0);
+                        // Transports can only receive from spires, heroes can receive from spires and transports
+                        const hasAdjacentTransport = selectedUnit.type === 'hero' 
+                            ? myTransports.some(t => isAdjacent(selectedUnit, t) && t.energy > 0)
+                            : false;
+                        
+                        if (hasAdjacentSpire || hasAdjacentTransport) {
+                            receiveEnergyBtn.disabled = false;
+                        } else {
+                            receiveEnergyBtn.disabled = true;
+                        }
+                    } else {
+                        receiveEnergyBtn.disabled = true;
+                    }
+
+                    // Transfer Energy button (Transport only, must be adjacent to Hero)
+                    const transferContainer = document.getElementById('transfer-energy-container');
+                    const transferInput = document.getElementById('energy-transfer-amount');
+                    if (selectedUnit.type === 'transport' && !selectedUnit.hasMoved && selectedUnit.energy > 0) {
+                        const myHero = units.find(u => u.owner === selectedUnit.owner && u.type === 'hero');
+                        if (myHero && isAdjacent(selectedUnit, myHero)) {
+                            transferEnergyBtn.disabled = false;
+                            transferContainer.style.display = 'block';
+                            // Set max value and update current value
+                            transferInput.max = selectedUnit.energy;
+                            if (parseInt(transferInput.value, 10) > selectedUnit.energy) {
+                                transferInput.value = selectedUnit.energy;
+                            }
+                        } else {
+                            transferEnergyBtn.disabled = true;
+                            transferContainer.style.display = 'none';
+                        }
+                    } else {
+                        transferEnergyBtn.disabled = true;
+                        transferContainer.style.display = 'none';
+                    }
+                } else {
+                    // Hide actions panel for opponent's units
+                    actionsPanel.style.display = 'none';
+                    buildBtn.disabled = true;
+                    buildWall1x1Btn.disabled = true;
+                    buildWall1x2Btn.disabled = true;
+                    receiveEnergyBtn.disabled = true;
+                    transferEnergyBtn.disabled = true;
+                }
+            } else if (selectedSpire) {
+                const isEnemy = selectedSpire.owner === 2;
+                popup.style.display = 'block';
+                popup.className = isEnemy ? 'enemy' : ''; // For red border
+                
+                popup.innerHTML = `
+                    <div class="popup-title">${isEnemy ? "ENEMY " : ""}SPIRE</div>
+                    <div class="popup-row"><span>Stored Energy:</span> <strong>${selectedSpire.storedEnergy}</strong></div>
+                `;
+
+                // Hide actions panel when spire is selected
+                actionsPanel.style.display = 'none';
+                buildBtn.disabled = true;
+                buildWall1x1Btn.disabled = true;
+                buildWall1x2Btn.disabled = true;
+                receiveEnergyBtn.disabled = true;
+                transferEnergyBtn.disabled = true;
+                document.getElementById('receive-energy-container').style.display = 'none';
+            }
+        }
+
+        function updatePopupPosition() {
+            if (!selectedUnit && !selectedSpire) return;
+            
+            const popup = document.getElementById('unit-popup');
+            const mesh = selectedUnit ? selectedUnit.mesh : selectedSpire.mesh;
+            
+            // Get 3D position
+            const vector = new THREE.Vector3();
+            // Start at mesh position
+            vector.copy(mesh.position);
+            // Add height offset (above head/spire)
+            vector.y += selectedUnit ? 6 : 12; 
+            
+            // Project to 2D screen space
+            vector.project(camera);
+
+            const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (-(vector.y * 0.5) + 0.5) * window.innerHeight;
+
+            popup.style.left = `${x}px`;
+            popup.style.top = `${y}px`;
+        }
+
+        function log(msg) {
+            // Log function disabled - console box removed
+            // Uncomment below for console.log debugging if needed
+            // console.log(msg);
+        }
+
+        function showModal(title, msg, color) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-title').style.color = color;
+            document.getElementById('modal-msg').innerHTML = msg;
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            if (labelRenderer) {
+                labelRenderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            
+            // Update popup pos
+            if (selectedUnit || selectedSpire) updatePopupPosition();
+
+            const time = Date.now() * 0.001;
+            units.forEach(u => {
+                if(u.type === 'transport') {
+                    u.mesh.position.y = 4 + Math.sin(time * 2 + u.x) * 0.5;
+                    u.mesh.rotation.y += 0.02;
+                }
+            });
+            spires.forEach(s => {
+                if(s.mesh.children[1]) s.mesh.children[1].rotation.y -= 0.01;
+                if(s.mesh.children[2]) {
+                    s.mesh.children[2].rotation.x = Math.PI/3 + Math.sin(time) * 0.1;
+                    s.mesh.children[2].rotation.y += 0.02;
+                }
+            });
+
+            renderer.render(scene, camera);
+            if (labelRenderer) {
+                labelRenderer.render(scene, camera);
+            }
+        }
+    </script>
+</body>
+</html>
