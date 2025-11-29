@@ -94,15 +94,57 @@
             color: #95a5a6;
             margin-bottom: 5px;
         }
-        .energy-source-item input {
+        .energy-source-item input[type="range"] {
             width: 100%;
-            padding: 6px;
+            height: 6px;
             background: #34495e;
-            border: 1px solid #555;
-            border-radius: 4px;
-            color: white;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .energy-source-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4db8ff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #2c3e50;
+        }
+        .energy-source-item input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #4db8ff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #2c3e50;
+        }
+        .energy-source-item input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: #34495e;
+            border-radius: 3px;
+        }
+        .energy-source-item input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 6px;
+            background: #34495e;
+            border-radius: 3px;
+        }
+        .energy-source-item .slider-value {
+            display: inline-block;
+            margin-left: 8px;
             font-size: 12px;
-            box-sizing: border-box;
+            color: #4db8ff;
+            font-weight: bold;
+            min-width: 30px;
+        }
+        .energy-source-item .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         /* Turn Indicator */
@@ -232,7 +274,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
             z-index: 1000;
             display: flex;
             justify-content: center;
@@ -240,54 +282,123 @@
             flex-direction: column;
         }
         #lobby-box {
-            background: #2c3e50;
-            padding: 40px;
-            border-radius: 10px;
+            background: linear-gradient(145deg, #0d1117 0%, #161b22 100%);
+            padding: 50px 60px;
+            border-radius: 20px;
             text-align: center;
             color: white;
-            border: 2px solid #4db8ff;
-            box-shadow: 0 0 30px rgba(77, 184, 255, 0.3);
-            min-width: 400px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6),
+                        0 0 0 1px rgba(59, 130, 246, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            min-width: 420px;
+            backdrop-filter: blur(10px);
         }
         #lobby-title {
-            font-size: 32px;
-            margin-bottom: 20px;
-            font-weight: bold;
-            color: #4db8ff;
+            font-size: 56px;
+            margin-bottom: 40px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #93c5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+            text-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
         }
         .lobby-section {
-            margin: 20px 0;
+            margin: 24px 0;
         }
         .lobby-input {
             width: 100%;
-            padding: 12px;
+            padding: 14px 16px;
             margin: 10px 0;
-            background: #34495e;
-            border: 1px solid #555;
-            border-radius: 6px;
-            color: white;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+            color: #e2e8f0;
             font-size: 16px;
             text-align: center;
             text-transform: uppercase;
             letter-spacing: 2px;
-            font-weight: bold;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
         .lobby-input:focus {
             outline: none;
-            border-color: #4db8ff;
+            border-color: #3b82f6;
+            background: rgba(15, 23, 42, 1);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1),
+                        0 0 20px rgba(59, 130, 246, 0.2);
+        }
+        #lobby-box select.lobby-input {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2360a5fa' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+        #lobby-box select.lobby-input option {
+            background: #0d1117;
+            color: #e2e8f0;
+            padding: 10px;
         }
         .lobby-status {
             margin: 15px 0;
             font-size: 14px;
-            color: #bdc3c7;
+            color: #94a3b8;
+            font-weight: 500;
         }
         .copy-link {
             cursor: pointer;
-            color: #4db8ff;
-            text-decoration: underline;
+            color: #60a5fa;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
         }
         .copy-link:hover {
-            color: #3498db;
+            color: #93c5fd;
+            text-decoration: underline;
+        }
+        #lobby-box .btn {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2),
+                        0 0 0 1px rgba(59, 130, 246, 0.1);
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        #lobby-box .btn:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4),
+                        0 0 0 1px rgba(59, 130, 246, 0.2);
+        }
+        #lobby-box .btn:active {
+            transform: translateY(0);
+        }
+        #lobby-box .btn[style*="background: #27ae60"] {
+            background: linear-gradient(135deg, #065f46 0%, #10b981 100%) !important;
+            border-color: rgba(16, 185, 129, 0.3);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2),
+                        0 0 0 1px rgba(16, 185, 129, 0.1);
+        }
+        #lobby-box .btn[style*="background: #27ae60"]:hover {
+            background: linear-gradient(135deg, #047857 0%, #34d399 100%) !important;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4),
+                        0 0 0 1px rgba(16, 185, 129, 0.2);
+        }
+        #lobby-box .btn[style*="background: #9b59b6"] {
+            background: linear-gradient(135deg, #6b21a8 0%, #9333ea 100%) !important;
+            border-color: rgba(147, 51, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(147, 51, 234, 0.2),
+                        0 0 0 1px rgba(147, 51, 234, 0.1);
+        }
+        #lobby-box .btn[style*="background: #9b59b6"]:hover {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+            box-shadow: 0 6px 20px rgba(147, 51, 234, 0.4),
+                        0 0 0 1px rgba(147, 51, 234, 0.2);
         }
     </style>
     <!-- Import Three.js via CDN -->
@@ -307,7 +418,7 @@
     <!-- Lobby Screen -->
     <div id="lobby-overlay">
         <div id="lobby-box">
-            <div id="lobby-title">Epic Strategy Game</div>
+            <div id="lobby-title">Epic</div>
             <div id="lobby-content">
                 <div class="lobby-section">
                     <button id="btn-create-room" class="btn">Create Room</button>
@@ -331,9 +442,9 @@
                 <div class="lobby-section" id="ai-section">
                     <div class="lobby-status" style="margin-bottom: 15px;">Play vs AI:</div>
                     <select id="ai-difficulty" class="lobby-input" style="margin-bottom: 10px;">
-                        <option value="easy">Easy (Aggressive)</option>
-                        <option value="medium" selected>Medium (Balanced)</option>
-                        <option value="hard">Hard (Conservative)</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
                     </select>
                     <button id="btn-play-ai" class="btn" style="background: #9b59b6;">Play vs AI</button>
                 </div>
@@ -2535,21 +2646,33 @@
             adjacentSpires.forEach((spire, index) => {
                 const item = document.createElement('div');
                 item.className = 'energy-source-item';
+                const maxEnergy = Math.min(spire.storedEnergy, 10);
                 item.innerHTML = `
                     <label>Spire at [${spire.x},${spire.z}]</label>
                     <div class="source-info">
                         <span>Available: ${spire.storedEnergy}</span>
                         <span>Max: 10</span>
                     </div>
-                    <input type="number" 
-                           id="spire-energy-${index}" 
-                           min="0" 
-                           max="${Math.min(spire.storedEnergy, 10)}" 
-                           value="0" 
-                           data-type="spire" 
-                           data-index="${spires.indexOf(spire)}" />
+                    <div class="slider-container">
+                        <input type="range" 
+                               id="spire-energy-${index}" 
+                               min="0" 
+                               max="${maxEnergy}" 
+                               value="0" 
+                               step="1"
+                               data-type="spire" 
+                               data-index="${spires.indexOf(spire)}" />
+                        <span class="slider-value" id="spire-energy-value-${index}">0</span>
+                    </div>
                 `;
                 container.appendChild(item);
+                
+                // Add event listener to update display value
+                const slider = document.getElementById(`spire-energy-${index}`);
+                const valueDisplay = document.getElementById(`spire-energy-value-${index}`);
+                slider.addEventListener('input', () => {
+                    valueDisplay.textContent = slider.value;
+                });
             });
             
             adjacentTransports.forEach((transport, index) => {
@@ -2560,15 +2683,26 @@
                     <div class="source-info">
                         <span>Available: ${transport.energy}</span>
                     </div>
-                    <input type="number" 
-                           id="transport-energy-${index}" 
-                           min="0" 
-                           max="${transport.energy}" 
-                           value="0" 
-                           data-type="transport" 
-                           data-id="${transport.id}" />
+                    <div class="slider-container">
+                        <input type="range" 
+                               id="transport-energy-${index}" 
+                               min="0" 
+                               max="${transport.energy}" 
+                               value="0" 
+                               step="1"
+                               data-type="transport" 
+                               data-id="${transport.id}" />
+                        <span class="slider-value" id="transport-energy-value-${index}">0</span>
+                    </div>
                 `;
                 container.appendChild(item);
+                
+                // Add event listener to update display value
+                const slider = document.getElementById(`transport-energy-${index}`);
+                const valueDisplay = document.getElementById(`transport-energy-value-${index}`);
+                slider.addEventListener('input', () => {
+                    valueDisplay.textContent = slider.value;
+                });
             });
 
             // Show the container
@@ -2583,7 +2717,7 @@
             }
 
             const container = document.getElementById('receive-energy-sources');
-            const inputs = container.querySelectorAll('input[type="number"]');
+            const inputs = container.querySelectorAll('input[type="range"]');
             
             let totalReceived = 0;
             const transfers = [];
