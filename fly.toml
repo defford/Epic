@@ -1,4 +1,4 @@
-app = "epic-board-game"
+app = "epic-journey-game"
 primary_region = "iad"
 
 [build]
