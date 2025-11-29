@@ -171,6 +171,18 @@ io.on('connection', (socket) => {
         });
     });
     
+    // Game over
+    socket.on('gameOver', (data) => {
+        const room = rooms.get(socket.roomCode);
+        if (!room) return;
+        
+        // Broadcast game over to other players in room
+        socket.to(socket.roomCode).emit('gameOver', {
+            winner: data.winner,
+            reason: data.reason
+        });
+    });
+    
     // Disconnect
     socket.on('disconnect', () => {
         const room = rooms.get(socket.roomCode);

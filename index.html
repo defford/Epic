@@ -297,8 +297,13 @@
         }
         #modal-title { font-size: 32px; margin-bottom: 20px; font-weight: bold; }
         #modal-msg { font-size: 18px; margin-bottom: 30px; color: #bdc3c7; }
-        #btn-restart { background: #27ae60; }
-        #btn-restart:hover { background: #2ecc71; }
+        #modal-box .btn {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        #modal-box .btn:last-child {
+            margin-bottom: 0;
+        }
 
         /* How To Play Modal */
         #how-to-play-overlay {
@@ -715,7 +720,8 @@
         <div id="modal-box">
             <div id="modal-title">GAME OVER</div>
             <div id="modal-msg"></div>
-            <button id="btn-restart" class="btn">Play Again</button>
+            <button id="btn-rematch-game-over" class="btn" style="background: #27ae60; display: none;">Request Rematch</button>
+            <button id="btn-exit-game-over" class="btn" style="background: #34495e;">Back to Menu</button>
         </div>
     </div>
 
@@ -954,13 +960,29 @@
             socket.on('rematchRequest', (data) => {
                 // Show that the other player wants a rematch
                 const postResignMsg = document.getElementById('post-resign-msg');
-                const currentMsg = postResignMsg.textContent;
-                postResignMsg.textContent = currentMsg + ` Player ${data.requestingPlayer} wants a rematch. Click "Request Rematch" to accept.`;
+                if (postResignMsg && postResignMsg.textContent) {
+                    const currentMsg = postResignMsg.textContent;
+                    postResignMsg.textContent = currentMsg + ` Player ${data.requestingPlayer} wants a rematch. Click "Request Rematch" to accept.`;
+                }
+                
+                // Also update game over modal if it's showing
+                const modalMsg = document.getElementById('modal-msg');
+                if (modalMsg && document.getElementById('modal-overlay').style.display === 'flex') {
+                    const currentModalMsg = modalMsg.innerHTML;
+                    modalMsg.innerHTML = currentModalMsg + `<br><br>Player ${data.requestingPlayer} wants a rematch. Click "Request Rematch" to accept.`;
+                }
             });
             
             socket.on('rematchAccepted', (data) => {
                 // Both players accepted, restart game
                 location.reload();
+            });
+            
+            socket.on('gameOver', (data) => {
+                isGameOver = true;
+                const title = data.winner === 1 ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
+                const color = data.winner === 1 ? "#2ecc71" : "#e74c3c";
+                showModal(title, `Winner: Player ${data.winner}<br>${data.reason}`, color);
             });
         }
         
@@ -1314,7 +1336,12 @@
             document.getElementById('btn-receive-energy').addEventListener('click', showReceiveEnergyUI);
             document.getElementById('btn-confirm-receive-energy').addEventListener('click', confirmReceiveEnergy);
             document.getElementById('btn-transfer-energy').addEventListener('click', transferEnergyToHero);
-            document.getElementById('btn-restart').addEventListener('click', () => location.reload());
+            document.getElementById('btn-rematch-game-over').addEventListener('click', () => {
+                handleRematchRequest();
+            });
+            document.getElementById('btn-exit-game-over').addEventListener('click', () => {
+                location.reload();
+            });
         }
 
         function createBoard() {
@@ -3661,6 +3688,15 @@
             const title = winner === 1 ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
             const color = winner === 1 ? "#2ecc71" : "#e74c3c";
             
+            // Broadcast game over to other player in multiplayer
+            if (isMultiplayer && socket) {
+                socket.emit('gameOver', {
+                    roomCode: roomCode,
+                    winner: winner,
+                    reason: reason
+                });
+            }
+            
             showModal(title, `Winner: Player ${winner}<br>${reason}`, color);
         }
 
@@ -4628,6 +4664,15 @@
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-title').style.color = color;
             document.getElementById('modal-msg').innerHTML = msg;
+            
+            // Show rematch button only for multiplayer games
+            const rematchBtn = document.getElementById('btn-rematch-game-over');
+            if (isMultiplayer && socket) {
+                rematchBtn.style.display = 'block';
+            } else {
+                rematchBtn.style.display = 'none';
+            }
+            
             document.getElementById('modal-overlay').style.display = 'flex';
         }
 
