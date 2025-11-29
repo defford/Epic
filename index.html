@@ -204,6 +204,39 @@
             transform: translateX(calc(-50% + 180px));
         }
 
+        /* Menu Button */
+        #btn-menu {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(calc(-50% - 180px));
+            width: auto;
+            min-width: 80px;
+            padding: 10px 20px;
+            margin-top: 0;
+            background: #7f8c8d;
+            border: none;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 10;
+            white-space: nowrap;
+            display: none;
+        }
+        #btn-menu:hover { 
+            background: #95a5a6; 
+            transform: translateX(calc(-50% - 180px)) translateY(-1px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+        }
+        #btn-menu:active { 
+            transform: translateX(calc(-50% - 180px)) translateY(0);
+        }
+
         /* Floating Unit Popup */
         #unit-popup {
             position: absolute;
@@ -338,95 +371,122 @@
             background: #c0392b;
         }
 
-        /* Help Button (?) Bubble */
-        #btn-help {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(calc(-50% - 180px));
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #3498db;
-            border: none;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            z-index: 10;
+        /* In-Game Menu Overlay */
+        #menu-overlay {
             display: none;
-            align-items: center;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1500;
             justify-content: center;
+            align-items: center;
+            flex-direction: column;
         }
-        #btn-help:hover {
-            background: #2980b9;
-            transform: translateX(calc(-50% - 180px)) translateY(-1px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+        #menu-box {
+            background: #2c3e50;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            border: 2px solid #4db8ff;
+            box-shadow: 0 0 30px rgba(77, 184, 255, 0.3);
+            min-width: 300px;
         }
-        #btn-help:active {
-            transform: translateX(calc(-50% - 180px)) translateY(0);
+        #menu-title {
+            font-size: 32px;
+            margin-bottom: 30px;
+            font-weight: bold;
+            color: #4db8ff;
+        }
+        #menu-box .btn {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        #menu-box .btn:last-child {
+            margin-bottom: 0;
         }
 
-        /* Help Tooltip */
-        #help-tooltip {
+        /* Resign Confirmation Modal */
+        #resign-overlay {
             display: none;
             position: absolute;
-            top: 70px;
-            left: 50%;
-            transform: translateX(calc(-50% - 180px));
-            width: 350px;
-            background: rgba(20, 20, 30, 0.95);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1600;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #resign-box {
+            background: #2c3e50;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
             color: white;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid #444;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
-            z-index: 15;
-            font-size: 14px;
-            line-height: 1.5;
+            border: 2px solid #e74c3c;
+            box-shadow: 0 0 30px rgba(231, 76, 60, 0.3);
+            min-width: 300px;
         }
-        #help-tooltip::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: 20px;
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-bottom: 8px solid rgba(20, 20, 30, 0.95);
+        #resign-title {
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #e74c3c;
         }
-        #help-tooltip h3 {
-            color: #4db8ff;
-            margin-top: 0;
-            margin-bottom: 10px;
+        #resign-msg {
             font-size: 16px;
+            margin-bottom: 30px;
+            color: #bdc3c7;
         }
-        #help-tooltip ul {
-            margin-left: 20px;
-            margin-bottom: 10px;
+        #resign-box .btn {
+            width: 100%;
+            margin-bottom: 15px;
         }
-        #help-tooltip li {
-            margin-bottom: 5px;
-        }
-        #help-tooltip .close-tooltip {
-            position: absolute;
-            top: 5px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: #999;
-            font-size: 20px;
-            cursor: pointer;
-            line-height: 1;
-        }
-        #help-tooltip .close-tooltip:hover {
-            color: white;
+        #resign-box .btn:last-child {
+            margin-bottom: 0;
         }
 
+        /* Post-Resign Options Modal */
+        #post-resign-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1700;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #post-resign-box {
+            background: #2c3e50;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            border: 2px solid #4db8ff;
+            box-shadow: 0 0 30px rgba(77, 184, 255, 0.3);
+            min-width: 300px;
+        }
+        #post-resign-title {
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #4db8ff;
+        }
+        #post-resign-msg {
+            font-size: 16px;
+            margin-bottom: 30px;
+            color: #bdc3c7;
+        }
+        #post-resign-box .btn {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        #post-resign-box .btn:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Help Button (?) Bubble */
         /* Lobby Screen */
         #lobby-overlay {
             position: absolute;
@@ -617,6 +677,9 @@
 
     <div id="turn-indicator">Player 1 Turn</div>
     
+    <!-- Menu Button -->
+    <button id="btn-menu">Menu</button>
+    
     <!-- Floating Popup Element -->
     <div id="unit-popup">
         <div class="popup-title">Unit Name</div>
@@ -653,6 +716,36 @@
             <div id="modal-title">GAME OVER</div>
             <div id="modal-msg"></div>
             <button id="btn-restart" class="btn">Play Again</button>
+        </div>
+    </div>
+
+    <!-- In-Game Menu -->
+    <div id="menu-overlay">
+        <div id="menu-box">
+            <div id="menu-title">Game Menu</div>
+            <button id="btn-menu-rules" class="btn" style="background: #95a5a6;">Game Rules</button>
+            <button id="btn-menu-resign" class="btn" style="background: #e74c3c;">Resign</button>
+            <button id="btn-menu-exit" class="btn" style="background: #34495e;">Exit Menu</button>
+        </div>
+    </div>
+
+    <!-- Resign Confirmation Modal -->
+    <div id="resign-overlay">
+        <div id="resign-box">
+            <div id="resign-title">Resign Game?</div>
+            <div id="resign-msg">Are you sure you want to resign? This will end the game.</div>
+            <button id="btn-resign-confirm" class="btn" style="background: #e74c3c;">Yes, Resign</button>
+            <button id="btn-resign-cancel" class="btn" style="background: #34495e;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Post-Resign Options Modal -->
+    <div id="post-resign-overlay">
+        <div id="post-resign-box">
+            <div id="post-resign-title">Game Resigned</div>
+            <div id="post-resign-msg">You have resigned from the game.</div>
+            <button id="btn-rematch" class="btn" style="background: #27ae60; display: none;">Request Rematch</button>
+            <button id="btn-back-to-menu" class="btn" style="background: #34495e;">Back to Menu</button>
         </div>
     </div>
 
@@ -711,21 +804,6 @@
                 </ul>
             </div>
         </div>
-    </div>
-
-    <!-- Help Button (?) -->
-    <button id="btn-help">?</button>
-
-    <!-- Help Tooltip -->
-    <div id="help-tooltip">
-        <button class="close-tooltip">×</button>
-        <h3>Quick Guide</h3>
-        <ul>
-            <li><strong>Move:</strong> Click unit → Click adjacent tile</li>
-            <li><strong>Build:</strong> Select Hero → Click build button → Click location</li>
-            <li><strong>Energy:</strong> Transport collects from Spires, transfers to Hero</li>
-            <li><strong>Win:</strong> Reduce enemy Hero energy to 0</li>
-        </ul>
     </div>
 
     <script type="module">
@@ -833,7 +911,7 @@
             });
             
             socket.on('gameStart', (data) => {
-                document.getElementById('btn-help').style.display = 'flex';
+                document.getElementById('btn-menu').style.display = 'block';
                 document.getElementById('lobby-overlay').style.display = 'none';
                 isMultiplayer = true;
                 currentPlayer = myPlayerNumber;
@@ -856,6 +934,33 @@
             
             socket.on('error', (data) => {
                 alert(data.message);
+            });
+            
+            socket.on('playerResigned', (data) => {
+                const winner = data.resignedPlayer === 1 ? 2 : 1;
+                isGameOver = true;
+                
+                // Hide the game over modal if it's showing
+                document.getElementById('modal-overlay').style.display = 'none';
+                
+                // Show post-resign options for the non-resigning player
+                const rematchBtn = document.getElementById('btn-rematch');
+                rematchBtn.style.display = 'block';
+                document.getElementById('post-resign-title').textContent = 'Opponent Resigned';
+                document.getElementById('post-resign-msg').textContent = `Player ${data.resignedPlayer} has resigned. You win!`;
+                document.getElementById('post-resign-overlay').style.display = 'flex';
+            });
+            
+            socket.on('rematchRequest', (data) => {
+                // Show that the other player wants a rematch
+                const postResignMsg = document.getElementById('post-resign-msg');
+                const currentMsg = postResignMsg.textContent;
+                postResignMsg.textContent = currentMsg + ` Player ${data.requestingPlayer} wants a rematch. Click "Request Rematch" to accept.`;
+            });
+            
+            socket.on('rematchAccepted', (data) => {
+                // Both players accepted, restart game
+                location.reload();
             });
         }
         
@@ -1054,30 +1159,57 @@
             }
         });
 
-        // Help button (?) tooltip handlers
-        document.getElementById('btn-help').addEventListener('click', (e) => {
-            e.stopPropagation();
-            const tooltip = document.getElementById('help-tooltip');
-            tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
+        // In-Game Menu handlers
+        document.getElementById('btn-menu').addEventListener('click', () => {
+            document.getElementById('menu-overlay').style.display = 'flex';
         });
-        document.querySelector('#help-tooltip .close-tooltip').addEventListener('click', () => {
-            document.getElementById('help-tooltip').style.display = 'none';
-        });
-        // Close tooltip when clicking outside
-        document.addEventListener('click', (e) => {
-            const tooltip = document.getElementById('help-tooltip');
-            const helpBtn = document.getElementById('btn-help');
-            if (tooltip && tooltip.style.display === 'block' && 
-                !tooltip.contains(e.target) && 
-                !helpBtn.contains(e.target)) {
-                tooltip.style.display = 'none';
+        document.getElementById('menu-overlay').addEventListener('click', (e) => {
+            if (e.target.id === 'menu-overlay') {
+                document.getElementById('menu-overlay').style.display = 'none';
             }
         });
-        
+        document.getElementById('btn-menu-rules').addEventListener('click', () => {
+            document.getElementById('menu-overlay').style.display = 'none';
+            document.getElementById('how-to-play-overlay').style.display = 'flex';
+        });
+        document.getElementById('btn-menu-resign').addEventListener('click', () => {
+            document.getElementById('menu-overlay').style.display = 'none';
+            document.getElementById('resign-overlay').style.display = 'flex';
+        });
+        document.getElementById('btn-menu-exit').addEventListener('click', () => {
+            document.getElementById('menu-overlay').style.display = 'none';
+        });
+
+        // Resign Confirmation handlers
+        document.getElementById('btn-resign-confirm').addEventListener('click', () => {
+            handleResign();
+        });
+        document.getElementById('btn-resign-cancel').addEventListener('click', () => {
+            document.getElementById('resign-overlay').style.display = 'none';
+        });
+        document.getElementById('resign-overlay').addEventListener('click', (e) => {
+            if (e.target.id === 'resign-overlay') {
+                document.getElementById('resign-overlay').style.display = 'none';
+            }
+        });
+
+        // Post-Resign handlers
+        document.getElementById('btn-rematch').addEventListener('click', () => {
+            handleRematchRequest();
+        });
+        document.getElementById('btn-back-to-menu').addEventListener('click', () => {
+            location.reload();
+        });
+        document.getElementById('post-resign-overlay').addEventListener('click', (e) => {
+            if (e.target.id === 'post-resign-overlay') {
+                // Don't close on overlay click - require button click
+            }
+        });
+
         // For local play (no multiplayer)
         function startLocalGame() {
             document.getElementById('lobby-overlay').style.display = 'none';
-            document.getElementById('btn-help').style.display = 'flex';
+            document.getElementById('btn-menu').style.display = 'block';
             isMultiplayer = false;
             isPlayingAI = false;
             init();
@@ -1087,7 +1219,7 @@
         // Start AI game
         function startAIGame() {
             document.getElementById('lobby-overlay').style.display = 'none';
-            document.getElementById('btn-help').style.display = 'flex';
+            document.getElementById('btn-menu').style.display = 'block';
             isMultiplayer = false;
             isPlayingAI = true;
             myPlayerNumber = 1; // Human is always player 1
@@ -2014,13 +2146,7 @@
             if (isMultiplayer && currentPlayer !== myPlayerNumber) return;
             // In AI mode, only allow player 1 (human) to act
             if (isPlayingAI && currentPlayer !== 1) return;
-            if (event.target.closest('#actions-panel') || event.target.closest('#modal-overlay') || event.target.closest('#help-tooltip') || event.target.closest('#btn-help')) return;
-            
-            // Close tooltip when clicking on game board
-            const tooltip = document.getElementById('help-tooltip');
-            if (tooltip && tooltip.style.display === 'block') {
-                tooltip.style.display = 'none';
-            }
+            if (event.target.closest('#actions-panel') || event.target.closest('#modal-overlay') || event.target.closest('#btn-menu') || event.target.closest('#menu-overlay') || event.target.closest('#resign-overlay') || event.target.closest('#post-resign-overlay')) return;
 
             // Update mouse position relative to renderer
             const rect = renderer.domElement.getBoundingClientRect();
@@ -3536,6 +3662,42 @@
             const color = winner === 1 ? "#2ecc71" : "#e74c3c";
             
             showModal(title, `Winner: Player ${winner}<br>${reason}`, color);
+        }
+
+        function handleResign() {
+            isGameOver = true;
+            document.getElementById('resign-overlay').style.display = 'none';
+            
+            if (isMultiplayer && socket) {
+                // Notify opponent in multiplayer
+                socket.emit('playerResigned', {
+                    roomCode: roomCode,
+                    resignedPlayer: myPlayerNumber
+                });
+            }
+            
+            // Show post-resign options
+            const rematchBtn = document.getElementById('btn-rematch');
+            if (isMultiplayer && socket) {
+                rematchBtn.style.display = 'block';
+            } else {
+                rematchBtn.style.display = 'none';
+            }
+            document.getElementById('post-resign-overlay').style.display = 'flex';
+        }
+
+        function handleRematchRequest() {
+            if (socket && isMultiplayer) {
+                // Send rematch request to other player
+                socket.emit('rematchRequest', {
+                    roomCode: roomCode,
+                    requestingPlayer: myPlayerNumber
+                });
+                // Also accept rematch (if both players click, both accept and game restarts)
+                socket.emit('rematchAccepted', {
+                    roomCode: roomCode
+                });
+            }
         }
 
         function processEndTurn(owner) {

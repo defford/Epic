@@ -138,6 +138,39 @@ io.on('connection', (socket) => {
         socket.to(socket.roomCode).emit('gameStateUpdate', data);
     });
     
+    // Player resignation
+    socket.on('playerResigned', (data) => {
+        const room = rooms.get(socket.roomCode);
+        if (!room) return;
+        
+        // Broadcast resignation to other players in room
+        socket.to(socket.roomCode).emit('playerResigned', {
+            resignedPlayer: socket.playerNumber
+        });
+    });
+    
+    // Rematch request
+    socket.on('rematchRequest', (data) => {
+        const room = rooms.get(socket.roomCode);
+        if (!room) return;
+        
+        // Broadcast rematch request to other players in room
+        socket.to(socket.roomCode).emit('rematchRequest', {
+            requestingPlayer: socket.playerNumber
+        });
+    });
+    
+    // Rematch accepted
+    socket.on('rematchAccepted', (data) => {
+        const room = rooms.get(socket.roomCode);
+        if (!room) return;
+        
+        // Broadcast rematch acceptance to other players in room
+        socket.to(socket.roomCode).emit('rematchAccepted', {
+            acceptingPlayer: socket.playerNumber
+        });
+    });
+    
     // Disconnect
     socket.on('disconnect', () => {
         const room = rooms.get(socket.roomCode);
