@@ -267,6 +267,166 @@
         #btn-restart { background: #27ae60; }
         #btn-restart:hover { background: #2ecc71; }
 
+        /* How To Play Modal */
+        #how-to-play-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #how-to-play-box {
+            background: #2c3e50;
+            padding: 40px;
+            border-radius: 10px;
+            color: white;
+            border: 2px solid #4db8ff;
+            box-shadow: 0 0 30px rgba(77, 184, 255, 0.3);
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        #how-to-play-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-align: center;
+            color: #4db8ff;
+        }
+        #how-to-play-content {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #bdc3c7;
+            text-align: left;
+        }
+        #how-to-play-content h3 {
+            color: #4db8ff;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        #how-to-play-content ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        #how-to-play-content li {
+            margin-bottom: 8px;
+        }
+        #btn-close-how-to-play {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #e74c3c;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        #btn-close-how-to-play:hover {
+            background: #c0392b;
+        }
+
+        /* Help Button (?) Bubble */
+        #btn-help {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(calc(-50% - 180px));
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3498db;
+            border: none;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 10;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        #btn-help:hover {
+            background: #2980b9;
+            transform: translateX(calc(-50% - 180px)) translateY(-1px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+        }
+        #btn-help:active {
+            transform: translateX(calc(-50% - 180px)) translateY(0);
+        }
+
+        /* Help Tooltip */
+        #help-tooltip {
+            display: none;
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(calc(-50% - 180px));
+            width: 350px;
+            background: rgba(20, 20, 30, 0.95);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #444;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 15;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        #help-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid rgba(20, 20, 30, 0.95);
+        }
+        #help-tooltip h3 {
+            color: #4db8ff;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        #help-tooltip ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        #help-tooltip li {
+            margin-bottom: 5px;
+        }
+        #help-tooltip .close-tooltip {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        #help-tooltip .close-tooltip:hover {
+            color: white;
+        }
+
         /* Lobby Screen */
         #lobby-overlay {
             position: absolute;
@@ -448,6 +608,9 @@
                     </select>
                     <button id="btn-play-ai" class="btn" style="background: #9b59b6;">Play vs AI</button>
                 </div>
+                <div class="lobby-section">
+                    <button id="btn-how-to-play" class="btn" style="background: #95a5a6;">How To Play</button>
+                </div>
             </div>
         </div>
     </div>
@@ -467,6 +630,7 @@
             <button id="btn-build" class="btn" disabled>Build Spire (3 Energy)</button>
             <button id="btn-build-wall-1x1" class="btn" disabled>Build 1x1 Wall (1 Energy)</button>
             <button id="btn-build-wall-1x2" class="btn" disabled>Build 1x2 Wall (2 Energy)</button>
+            <button id="btn-attack-wall" class="btn" disabled>Attack Wall (1 Energy)</button>
             <button id="btn-receive-energy" class="btn" disabled>Receive Energy</button>
             <div id="receive-energy-container" class="energy-input-container">
                 <div id="receive-energy-sources"></div>
@@ -490,6 +654,78 @@
             <div id="modal-msg"></div>
             <button id="btn-restart" class="btn">Play Again</button>
         </div>
+    </div>
+
+    <!-- How To Play Modal -->
+    <div id="how-to-play-overlay">
+        <div id="how-to-play-box">
+            <button id="btn-close-how-to-play">×</button>
+            <div id="how-to-play-title">How To Play</div>
+            <div id="how-to-play-content">
+                <h3>Objective</h3>
+                <p>Defeat your opponent's Hero by reducing their energy to zero or below.</p>
+
+                <h3>Game Setup</h3>
+                <ul>
+                    <li>Each player starts with a Hero (Rectangle), Transport (Sphere), and Energy Spire (Cone)</li>
+                    <li>Players take turns performing actions</li>
+                    <li>Each turn, you can perform an action for each piece once, or pass your turn to the opponent</li>
+                </ul>
+
+                <h3>Units</h3>
+                <ul>
+                    <li><strong>Hero</strong> (Rectangle): Your main unit. Can move, build structures, and attack</li>
+                    <li><strong>Transport</strong> (Sphere): Can move twice as fast as your Hero and transfer energy to your Hero</li>
+                    <li><strong>Energy Spire</strong> (Cone): Generates and stores energy. Cannot move</li>
+                </ul>
+
+                <h3>Actions</h3>
+                <ul>
+                    <li><strong>Move</strong>: Click a unit and then click an adjacent tile to move (costs 1 energy)</li>
+                    <li><strong>Build Spire</strong>: Hero can build an Energy Spire on an adjacent empty tile (costs 3 energy)</li>
+                    <li><strong>Build Wall</strong>: Hero can build walls (1x1 costs 1 energy, 1x2 costs 2 energy)</li>
+                    <li><strong>Receive Energy</strong>: Transport can receive energy from adjacent Energy Spires</li>
+                    <li><strong>Transfer Energy</strong>: Transport can transfer energy to your Hero</li>
+                    <li><strong>End Turn</strong>: Pass your turn to the opponent</li>
+                </ul>
+
+                <h3>Energy System</h3>
+                <ul>
+                    <li>Energy Spires generate energy each turn</li>
+                    <li>Units need energy to perform actions</li>
+                    <li>Transports can collect energy from Spires and give it to Heroes</li>
+                </ul>
+
+                <h3>Combat</h3>
+                <ul>
+                    <li>When a Hero attacks an enemy Hero, both lose energy equal to each other's energy</li>
+                    <li>If a Hero's energy reaches zero or below, that player loses</li>
+                </ul>
+
+                <h3>Tips</h3>
+                <ul>
+                    <li>Build additional Energy Spires to increase your energy production</li>
+                    <li>Use your Transport to efficiently move energy from Spires to your Hero</li>
+                    <li>Position walls strategically to block enemy movement</li>
+                    <li>Plan your moves carefully - energy is limited!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Button (?) -->
+    <button id="btn-help">?</button>
+
+    <!-- Help Tooltip -->
+    <div id="help-tooltip">
+        <button class="close-tooltip">×</button>
+        <h3>Quick Guide</h3>
+        <ul>
+            <li><strong>Move:</strong> Click unit → Click adjacent tile</li>
+            <li><strong>Build:</strong> Select Hero → Click build button → Click location</li>
+            <li><strong>Energy:</strong> Transport collects from Spires, transfers to Hero</li>
+            <li><strong>Win:</strong> Reduce enemy Hero energy to 0</li>
+        </ul>
     </div>
 
     <script type="module">
@@ -534,6 +770,8 @@
         let wallBuildHero = null;
         let wallBuildSize = 1; // 1 for 1x1, 2 for 1x2
         let wallBuildTile2 = null; // For 1x2 walls: {x, z} of second tile for straight walls
+        let attackWallMode = false;
+        let attackWallUnit = null; // Hero or Transport unit attacking walls
         let socket = null;
         let roomCode = null;
         let isMultiplayer = false;
@@ -595,6 +833,7 @@
             });
             
             socket.on('gameStart', (data) => {
+                document.getElementById('btn-help').style.display = 'flex';
                 document.getElementById('lobby-overlay').style.display = 'none';
                 isMultiplayer = true;
                 currentPlayer = myPlayerNumber;
@@ -671,6 +910,26 @@
             } else if (data.action === 'buildWall') {
                 spawnWall(data.owner, data.x, data.z, data.direction, data.size, data.direction2);
                 updateUI();
+            } else if (data.action === 'attackWall') {
+                const unit = units.find(u => u.id === data.unitId);
+                if (unit) {
+                    unit.energy = data.energy;
+                    unit.hasMoved = data.hasMoved;
+                    updateEnergyLabel(unit);
+                    
+                    // Find and remove the wall
+                    const wall = findWallAtEdge(data.x, data.z, data.direction);
+                    if (wall) {
+                        removeWall(wall);
+                    }
+                    
+                    // Check if heroes are now adjacent and should fight
+                    checkAdjacencyEvents();
+                    
+                    if (selectedUnit && selectedUnit.id === unit.id) {
+                        updateUI();
+                    }
+                }
             } else if (data.action === 'receiveEnergy') {
                 const unit = units.find(u => u.id === data.unitId);
                 if (unit) {
@@ -778,11 +1037,47 @@
                 aiDifficulty = document.getElementById('ai-difficulty').value;
                 startAIGame();
             });
+
+            // Wire up How To Play button
+            document.getElementById('btn-how-to-play').addEventListener('click', () => {
+                document.getElementById('how-to-play-overlay').style.display = 'flex';
+            });
         }
+
+        // How To Play Modal handlers
+        document.getElementById('btn-close-how-to-play').addEventListener('click', () => {
+            document.getElementById('how-to-play-overlay').style.display = 'none';
+        });
+        document.getElementById('how-to-play-overlay').addEventListener('click', (e) => {
+            if (e.target.id === 'how-to-play-overlay') {
+                document.getElementById('how-to-play-overlay').style.display = 'none';
+            }
+        });
+
+        // Help button (?) tooltip handlers
+        document.getElementById('btn-help').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const tooltip = document.getElementById('help-tooltip');
+            tooltip.style.display = tooltip.style.display === 'none' ? 'block' : 'none';
+        });
+        document.querySelector('#help-tooltip .close-tooltip').addEventListener('click', () => {
+            document.getElementById('help-tooltip').style.display = 'none';
+        });
+        // Close tooltip when clicking outside
+        document.addEventListener('click', (e) => {
+            const tooltip = document.getElementById('help-tooltip');
+            const helpBtn = document.getElementById('btn-help');
+            if (tooltip && tooltip.style.display === 'block' && 
+                !tooltip.contains(e.target) && 
+                !helpBtn.contains(e.target)) {
+                tooltip.style.display = 'none';
+            }
+        });
         
         // For local play (no multiplayer)
         function startLocalGame() {
             document.getElementById('lobby-overlay').style.display = 'none';
+            document.getElementById('btn-help').style.display = 'flex';
             isMultiplayer = false;
             isPlayingAI = false;
             init();
@@ -792,6 +1087,7 @@
         // Start AI game
         function startAIGame() {
             document.getElementById('lobby-overlay').style.display = 'none';
+            document.getElementById('btn-help').style.display = 'flex';
             isMultiplayer = false;
             isPlayingAI = true;
             myPlayerNumber = 1; // Human is always player 1
@@ -882,6 +1178,7 @@
             document.getElementById('btn-build').addEventListener('click', buildSpire);
             document.getElementById('btn-build-wall-1x1').addEventListener('click', () => buildWall(1));
             document.getElementById('btn-build-wall-1x2').addEventListener('click', () => buildWall(2));
+            document.getElementById('btn-attack-wall').addEventListener('click', attackWall);
             document.getElementById('btn-receive-energy').addEventListener('click', showReceiveEnergyUI);
             document.getElementById('btn-confirm-receive-energy').addEventListener('click', confirmReceiveEnergy);
             document.getElementById('btn-transfer-energy').addEventListener('click', transferEnergyToHero);
@@ -1425,9 +1722,93 @@
         // --- Interaction ---
 
         function onMouseMove(event) {
-            // Only show hover highlight in wall build mode
-            if (!wallBuildMode) {
+            // Show hover highlight in wall build mode or attack wall mode
+            if (!wallBuildMode && !attackWallMode) {
                 clearHoverEdgeHighlight();
+                return;
+            }
+            
+            // Handle attack wall mode highlighting
+            if (attackWallMode && !wallBuildMode) {
+                // Update mouse position relative to renderer
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                // Raycast to find what we're hovering over
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(scene.children, true);
+
+                if (intersects.length > 0) {
+                    // Find intersection with ground/tile
+                    const groundHit = intersects.find(i => 
+                        i.object.userData.type === 'tile' || 
+                        (i.object.parent && i.object.parent.userData.type === 'tile')
+                    );
+
+                    if (groundHit && groundHit.point && attackWallUnit) {
+                        // Get edge information from world position
+                        const edgeInfo = getEdgeFromWorldPosition(groundHit.point.x, groundHit.point.z);
+                        
+                        if (edgeInfo) {
+                            // Check if this edge has an attackable 1x1 wall adjacent to the unit
+                            const wall = findWallAtEdge(edgeInfo.x, edgeInfo.z, edgeInfo.direction);
+                            
+                            if (wall && wall.size === 1) {
+                                // Check if wall is on an edge adjacent to the unit's tile
+                                // Wall can be on unit's tile or on adjacent tile facing the unit
+                                let isAdjacentEdge = (edgeInfo.x === attackWallUnit.x && edgeInfo.z === attackWallUnit.z);
+                                
+                                if (!isAdjacentEdge) {
+                                    // Check if wall is on adjacent tile edge facing the unit
+                                    if (edgeInfo.direction === 'e' && edgeInfo.x === attackWallUnit.x - 1 && edgeInfo.z === attackWallUnit.z) {
+                                        isAdjacentEdge = true; // Wall on west edge of tile to the west
+                                    } else if (edgeInfo.direction === 'w' && edgeInfo.x === attackWallUnit.x + 1 && edgeInfo.z === attackWallUnit.z) {
+                                        isAdjacentEdge = true; // Wall on east edge of tile to the east
+                                    } else if (edgeInfo.direction === 's' && edgeInfo.x === attackWallUnit.x && edgeInfo.z === attackWallUnit.z - 1) {
+                                        isAdjacentEdge = true; // Wall on north edge of tile to the north
+                                    } else if (edgeInfo.direction === 'n' && edgeInfo.x === attackWallUnit.x && edgeInfo.z === attackWallUnit.z + 1) {
+                                        isAdjacentEdge = true; // Wall on south edge of tile to the south
+                                    }
+                                }
+                                
+                                if (isAdjacentEdge) {
+                                    // Check if we need to update the hover highlight
+                                    let needsUpdate = true;
+                                    if (hoverEdgeHighlight && hoverEdgeHighlight.userData) {
+                                        needsUpdate = (
+                                            hoverEdgeHighlight.userData.x !== edgeInfo.x ||
+                                            hoverEdgeHighlight.userData.z !== edgeInfo.z ||
+                                            hoverEdgeHighlight.userData.direction !== edgeInfo.direction
+                                        );
+                                    }
+                                    
+                                    if (needsUpdate) {
+                                        clearHoverEdgeHighlight();
+                                        hoverEdgeHighlight = createHoverEdgeHighlight(
+                                            edgeInfo.x,
+                                            edgeInfo.z,
+                                            edgeInfo.direction
+                                        );
+                                        hoverEdgeHighlight.userData.isAttackable = true;
+                                        // Make it red to indicate attack
+                                        hoverEdgeHighlight.material.color.setHex(0xff0000);
+                                        scene.add(hoverEdgeHighlight);
+                                    }
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // No valid attackable wall under mouse - clear hover highlight
+                clearHoverEdgeHighlight();
+                return;
+            }
+            
+            // Handle wall build mode highlighting (existing code)
+            if (!wallBuildMode) {
                 return;
             }
 
@@ -1633,7 +2014,13 @@
             if (isMultiplayer && currentPlayer !== myPlayerNumber) return;
             // In AI mode, only allow player 1 (human) to act
             if (isPlayingAI && currentPlayer !== 1) return;
-            if (event.target.closest('#actions-panel') || event.target.closest('#modal-overlay')) return;
+            if (event.target.closest('#actions-panel') || event.target.closest('#modal-overlay') || event.target.closest('#help-tooltip') || event.target.closest('#btn-help')) return;
+            
+            // Close tooltip when clicking on game board
+            const tooltip = document.getElementById('help-tooltip');
+            if (tooltip && tooltip.style.display === 'block') {
+                tooltip.style.display = 'none';
+            }
 
             // Update mouse position relative to renderer
             const rect = renderer.domElement.getBoundingClientRect();
@@ -1677,6 +2064,76 @@
                         buildModeHero = null;
                         log("Build cancelled.");
                     }
+                } else if (attackWallMode) {
+                    // In attack wall mode, detect edge from intersection point
+                    if (hit.point && attackWallUnit) {
+                        const edgeInfo = getEdgeFromWorldPosition(hit.point.x, hit.point.z);
+                        if (edgeInfo) {
+                            // Find wall at this edge
+                            const wall = findWallAtEdge(edgeInfo.x, edgeInfo.z, edgeInfo.direction);
+                            
+                            if (wall && wall.size === 1) {
+                                // Check if wall is on an edge adjacent to the unit's tile
+                                // Wall can be on unit's tile or on adjacent tile facing the unit
+                                let isAdjacentEdge = (edgeInfo.x === attackWallUnit.x && edgeInfo.z === attackWallUnit.z);
+                                
+                                if (!isAdjacentEdge) {
+                                    // Check if wall is on adjacent tile edge facing the unit
+                                    if (edgeInfo.direction === 'e' && edgeInfo.x === attackWallUnit.x - 1 && edgeInfo.z === attackWallUnit.z) {
+                                        isAdjacentEdge = true; // Wall on west edge of tile to the west
+                                    } else if (edgeInfo.direction === 'w' && edgeInfo.x === attackWallUnit.x + 1 && edgeInfo.z === attackWallUnit.z) {
+                                        isAdjacentEdge = true; // Wall on east edge of tile to the east
+                                    } else if (edgeInfo.direction === 's' && edgeInfo.x === attackWallUnit.x && edgeInfo.z === attackWallUnit.z - 1) {
+                                        isAdjacentEdge = true; // Wall on north edge of tile to the north
+                                    } else if (edgeInfo.direction === 'n' && edgeInfo.x === attackWallUnit.x && edgeInfo.z === attackWallUnit.z + 1) {
+                                        isAdjacentEdge = true; // Wall on south edge of tile to the south
+                                    }
+                                }
+                                
+                                if (isAdjacentEdge) {
+                                    // Attack the wall
+                                    attackWallUnit.energy -= 1;
+                                    attackWallUnit.hasMoved = true;
+                                    updateEnergyLabel(attackWallUnit);
+                                    
+                                    // Remove the wall
+                                    removeWall(wall);
+                                    
+                                    // Send action to server in multiplayer
+                                    if (isMultiplayer) {
+                                        sendGameAction('attackWall', {
+                                            unitId: attackWallUnit.id,
+                                            x: edgeInfo.x,
+                                            z: edgeInfo.z,
+                                            direction: edgeInfo.direction,
+                                            energy: attackWallUnit.energy,
+                                            hasMoved: attackWallUnit.hasMoved
+                                        });
+                                    }
+                                    
+                                    // Clear attack mode
+                                    clearHoverEdgeHighlight();
+                                    attackWallMode = false;
+                                    attackWallUnit = null;
+                                    
+                                    // Check if heroes are now adjacent and should fight
+                                    checkAdjacencyEvents();
+                                    
+                                    // Update UI and check for auto-pass
+                                    updateUI();
+                                    deselect();
+                                    checkAndAutoPass();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Cancel attack wall mode
+                    clearHoverEdgeHighlight();
+                    attackWallMode = false;
+                    attackWallUnit = null;
+                    log("Wall attack cancelled.");
                 } else if (wallBuildMode) {
                     // In wall build mode, detect edge from intersection point
                     if (hit.point && wallBuildHero) {
@@ -1764,6 +2221,12 @@
                     buildMode = false;
                     buildModeHero = null;
                     log("Build cancelled.");
+                } else if (attackWallMode) {
+                    // Cancel attack wall mode
+                    clearHoverEdgeHighlight();
+                    attackWallMode = false;
+                    attackWallUnit = null;
+                    log("Wall attack cancelled.");
                 } else if (wallBuildMode) {
                     // Cancel wall build mode
                     clearEdgeHighlights();
@@ -1797,6 +2260,13 @@
                 wallBuildMode = false;
                 wallBuildHero = null;
                 wallBuildTile2 = null;
+            }
+            
+            // Cancel attack wall mode if active
+            if (attackWallMode) {
+                clearHoverEdgeHighlight();
+                attackWallMode = false;
+                attackWallUnit = null;
             }
             
             // Deselect previous selections
@@ -2187,6 +2657,13 @@
                 buildModeHero = null;
             }
             
+            // Cancel attack wall mode if active
+            if (attackWallMode) {
+                clearHoverEdgeHighlight();
+                attackWallMode = false;
+                attackWallUnit = null;
+            }
+            
             // Enter wall build mode
             wallBuildMode = true;
             wallBuildHero = selectedUnit;
@@ -2196,6 +2673,73 @@
             highlightValidWallBuildEdges(selectedUnit, size);
             
             log(`Click on an edge to build ${size}x1 wall. Click elsewhere to cancel.`);
+        }
+
+        function attackWall() {
+            if (!selectedUnit || (selectedUnit.type !== 'hero' && selectedUnit.type !== 'transport')) return;
+            if (selectedUnit.owner !== currentPlayer) return; // Security check
+            if (selectedUnit.hasMoved) {
+                log("Unit exhausted (already moved).");
+                return;
+            }
+            if (selectedUnit.energy < 1) {
+                log("Not enough energy (Need 1).");
+                return;
+            }
+
+            // Cancel build modes if active
+            if (buildMode) {
+                clearBuildHighlights();
+                buildMode = false;
+                buildModeHero = null;
+            }
+            if (wallBuildMode) {
+                clearEdgeHighlights();
+                clearHoverEdgeHighlight();
+                wallBuildMode = false;
+                wallBuildHero = null;
+                wallBuildTile2 = null;
+            }
+            
+            // Enter attack wall mode
+            attackWallMode = true;
+            attackWallUnit = selectedUnit;
+            
+            log("Click on a 1x1 wall to demolish it. Click elsewhere to cancel.");
+        }
+
+        function findWallAtEdge(x, z, direction) {
+            // Find a wall at the specified edge (only 1x1 walls can be attacked)
+            return walls.find(w => {
+                if (w.size !== 1) return false; // Only 1x1 walls can be attacked
+                return w.x === x && w.z === z && w.direction === direction;
+            });
+        }
+
+        function removeWall(wall) {
+            // Remove wall from scene and array
+            if (wall.mesh) {
+                scene.remove(wall.mesh);
+                // Dispose of geometry and material
+                wall.mesh.traverse((child) => {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(mat => mat.dispose());
+                        } else {
+                            child.material.dispose();
+                        }
+                    }
+                });
+            }
+            
+            // Remove from walls array
+            const index = walls.indexOf(wall);
+            if (index > -1) {
+                walls.splice(index, 1);
+            }
+            
+            log(`P${wall.owner}'s wall demolished.`);
         }
 
         function isValidWallBuildEdge(x, z, direction, hero) {
@@ -3694,6 +4238,7 @@
             const buildBtn = document.getElementById('btn-build');
             const buildWall1x1Btn = document.getElementById('btn-build-wall-1x1');
             const buildWall1x2Btn = document.getElementById('btn-build-wall-1x2');
+            const attackWallBtn = document.getElementById('btn-attack-wall');
             const receiveEnergyBtn = document.getElementById('btn-receive-energy');
             const transferEnergyBtn = document.getElementById('btn-transfer-energy');
             
@@ -3703,6 +4248,7 @@
                 buildBtn.disabled = true;
                 buildWall1x1Btn.disabled = true;
                 buildWall1x2Btn.disabled = true;
+                attackWallBtn.disabled = true;
                 receiveEnergyBtn.disabled = true;
                 transferEnergyBtn.disabled = true;
                 document.getElementById('transfer-energy-container').style.display = 'none';
@@ -3735,7 +4281,7 @@
                     }
 
                     // Build Wall buttons (Hero only)
-                    if (buildMode || wallBuildMode) {
+                    if (buildMode || wallBuildMode || attackWallMode) {
                         buildWall1x1Btn.disabled = true;
                         buildWall1x2Btn.disabled = true;
                     } else if (selectedUnit.type === 'hero' && !selectedUnit.hasMoved) {
@@ -3768,6 +4314,50 @@
                     } else {
                         buildWall1x1Btn.disabled = true;
                         buildWall1x2Btn.disabled = true;
+                    }
+
+                    // Attack Wall button (Hero and Transport)
+                    if (buildMode || wallBuildMode || attackWallMode) {
+                        attackWallBtn.disabled = true;
+                    } else if ((selectedUnit.type === 'hero' || selectedUnit.type === 'transport') && !selectedUnit.hasMoved && selectedUnit.energy >= 1) {
+                        // Check if there's an attackable 1x1 wall adjacent to the unit
+                        let canAttackWall = false;
+                        const directions = ['n', 's', 'e', 'w'];
+                        for (const dir of directions) {
+                            // Check wall on unit's tile edge
+                            const wallOnTile = findWallAtEdge(selectedUnit.x, selectedUnit.z, dir);
+                            if (wallOnTile && wallOnTile.size === 1) {
+                                canAttackWall = true;
+                                break;
+                            }
+                            // Check wall on adjacent tile edge (facing the unit)
+                            let adjX = selectedUnit.x;
+                            let adjZ = selectedUnit.z;
+                            let adjDir = dir;
+                            if (dir === 'n') {
+                                adjZ = selectedUnit.z - 1;
+                                adjDir = 's';
+                            } else if (dir === 's') {
+                                adjZ = selectedUnit.z + 1;
+                                adjDir = 'n';
+                            } else if (dir === 'e') {
+                                adjX = selectedUnit.x + 1;
+                                adjDir = 'w';
+                            } else if (dir === 'w') {
+                                adjX = selectedUnit.x - 1;
+                                adjDir = 'e';
+                            }
+                            if (adjX >= 0 && adjX < BOARD_SIZE && adjZ >= 0 && adjZ < BOARD_SIZE) {
+                                const wallAdjacent = findWallAtEdge(adjX, adjZ, adjDir);
+                                if (wallAdjacent && wallAdjacent.size === 1) {
+                                    canAttackWall = true;
+                                    break;
+                                }
+                            }
+                        }
+                        attackWallBtn.disabled = !canAttackWall;
+                    } else {
+                        attackWallBtn.disabled = true;
                     }
 
                     // Receive Energy button (Hero and Transport, must be adjacent to spire or transport)
@@ -3817,6 +4407,7 @@
                     buildBtn.disabled = true;
                     buildWall1x1Btn.disabled = true;
                     buildWall1x2Btn.disabled = true;
+                    attackWallBtn.disabled = true;
                     receiveEnergyBtn.disabled = true;
                     transferEnergyBtn.disabled = true;
                 }
@@ -3835,6 +4426,7 @@
                 buildBtn.disabled = true;
                 buildWall1x1Btn.disabled = true;
                 buildWall1x2Btn.disabled = true;
+                attackWallBtn.disabled = true;
                 receiveEnergyBtn.disabled = true;
                 transferEnergyBtn.disabled = true;
                 document.getElementById('receive-energy-container').style.display = 'none';
