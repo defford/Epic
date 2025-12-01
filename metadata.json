@@ -1,0 +1,5 @@
+{
+  "name": "Camp Connect",
+  "description": "A strategic 2-player board game where Heroes build Camps to extend their reach and capture the opponent.",
+  "requestFramePermissions": []
+}
