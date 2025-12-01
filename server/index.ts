@@ -1,12 +1,32 @@
 import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { createInitialBoard, getHeroPosition, isValidMove, isValidBuild, isValidDestroy } from '../utils/gameLogic.js';
 import { BoardState, Player } from '../types.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const server = createServer(app);
-const wss = new WebSocketServer({ server });
+
+// Serve static files from dist directory (Vite build output)
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+
+// Create WebSocket server (must be before Express catch-all route)
+const wss = new WebSocketServer({ 
+  server,
+  perMessageDeflate: false
+});
+
+// Handle all routes by serving index.html (for React Router if needed)
+// This must come after WebSocket server setup
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
 
 interface Client {
   ws: WebSocket;
@@ -185,10 +205,15 @@ function endTurn(game: GameInstance) {
 }
 
 
-wss.on('connection', (ws: WebSocket) => {
+wss.on('connection', (ws: WebSocket, req) => {
+  console.log('WebSocket connection established from:', req.socket.remoteAddress);
   const playerId = generatePlayerId();
   const client: Client = { ws, playerId };
   clients.set(playerId, client);
+
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+  });
 
   ws.on('message', (message: string) => {
     try {
@@ -228,8 +253,14 @@ wss.on('connection', (ws: WebSocket) => {
   });
 });
 
+wss.on('error', (error) => {
+  console.error('WebSocket server error:', error);
+});
+
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`WebSocket server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Serving static files from: ${distPath}`);
+  console.log(`WebSocket server ready for connections`);
 });
 
