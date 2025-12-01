@@ -19,6 +19,24 @@ const App: React.FC = () => {
   // Derived state
   const heroPos = getHeroPosition(board, currentPlayer);
 
+  const handleGameStart = (playerNum: Player, gId: string) => {
+    setIsMultiplayer(true);
+    setPlayerNumber(playerNum);
+    setGameId(gId);
+  };
+
+  const handleReturnToMenu = () => {
+    setIsMultiplayer(false);
+    setPlayerNumber(null);
+    setGameId(null);
+    setBoard(createInitialBoard());
+    setCurrentPlayer(1);
+    setTurnCount(1);
+    setWinner(null);
+    setSkips({ 1: false, 2: false });
+    wsService.disconnect();
+  };
+
   // WebSocket multiplayer setup
   useEffect(() => {
     if (!isMultiplayer) return;
@@ -51,28 +69,6 @@ const App: React.FC = () => {
     };
   }, [isMultiplayer]);
 
-  const handleGameStart = (playerNum: Player, gId: string) => {
-    setIsMultiplayer(true);
-    setPlayerNumber(playerNum);
-    setGameId(gId);
-  };
-
-  const handleReturnToMenu = () => {
-    setIsMultiplayer(false);
-    setPlayerNumber(null);
-    setGameId(null);
-    setBoard(createInitialBoard());
-    setCurrentPlayer(1);
-    setTurnCount(1);
-    setWinner(null);
-    setSkips({ 1: false, 2: false });
-    wsService.disconnect();
-  };
-
-  if (!isMultiplayer) {
-    return <MainMenu onGameStart={handleGameStart} />;
-  }
-
   // Handle Turn Skipping Logic (only for local/single-player mode)
   useEffect(() => {
     if (isMultiplayer || winner) return;
@@ -97,6 +93,11 @@ const App: React.FC = () => {
     }
 
   }, [currentPlayer, skips, winner, board, isMultiplayer]);
+
+  // Early return after all hooks
+  if (!isMultiplayer) {
+    return <MainMenu onGameStart={handleGameStart} />;
+  }
 
   // Left Click: Move Hero
   const handleCellClick = (x: number, y: number) => {
