@@ -24,3 +24,13 @@ export interface GameState {
 }
 
 export type GameAction = 'MOVE' | 'BUILD';
+
+export interface MultiplayerGameState {
+  gameId: string;
+  playerNumber: Player;
+  board: BoardState;
+  currentPlayer: Player;
+  turnCount: number;
+  winner: Player | null;
+  skips: { 1: boolean; 2: boolean };
+}

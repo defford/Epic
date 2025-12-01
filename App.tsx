@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { BoardState, Player, Position } from './types';
 import { createInitialBoard, getHeroPosition, isValidMove, isValidBuild, isValidDestroy, hasValidActions, BOARD_SIZE } from './utils/gameLogic';
 import { BoardCell } from './components/BoardCell';
+import { MainMenu } from './components/MainMenu';
+import { wsService } from './services/websocketService';
 import { RefreshCw, Tent, Trophy, MousePointer2 } from 'lucide-react';
 
 const App: React.FC = () => {
+  const [isMultiplayer, setIsMultiplayer] = useState(false);
+  const [playerNumber, setPlayerNumber] = useState<Player | null>(null);
+  const [gameId, setGameId] = useState<string | null>(null);
   const [board, setBoard] = useState<BoardState>(createInitialBoard());
   const [currentPlayer, setCurrentPlayer] = useState<Player>(1);
   const [turnCount, setTurnCount] = useState<number>(1);
@@ -14,9 +19,63 @@ const App: React.FC = () => {
   // Derived state
   const heroPos = getHeroPosition(board, currentPlayer);
 
-  // Handle Turn Skipping Logic
+  // WebSocket multiplayer setup
   useEffect(() => {
-    if (winner) return;
+    if (!isMultiplayer) return;
+
+    const handleGameState = (data: {
+      board: BoardState;
+      currentPlayer: Player;
+      turnCount: number;
+      winner: Player | null;
+      skips: { 1: boolean; 2: boolean };
+    }) => {
+      setBoard(data.board);
+      setCurrentPlayer(data.currentPlayer);
+      setTurnCount(data.turnCount);
+      setWinner(data.winner);
+      setSkips(data.skips);
+    };
+
+    const handleOpponentDisconnected = () => {
+      alert('Opponent disconnected. Returning to main menu.');
+      handleReturnToMenu();
+    };
+
+    wsService.on('GAME_STATE', handleGameState);
+    wsService.on('OPPONENT_DISCONNECTED', handleOpponentDisconnected);
+
+    return () => {
+      wsService.off('GAME_STATE', handleGameState);
+      wsService.off('OPPONENT_DISCONNECTED', handleOpponentDisconnected);
+    };
+  }, [isMultiplayer]);
+
+  const handleGameStart = (playerNum: Player, gId: string) => {
+    setIsMultiplayer(true);
+    setPlayerNumber(playerNum);
+    setGameId(gId);
+  };
+
+  const handleReturnToMenu = () => {
+    setIsMultiplayer(false);
+    setPlayerNumber(null);
+    setGameId(null);
+    setBoard(createInitialBoard());
+    setCurrentPlayer(1);
+    setTurnCount(1);
+    setWinner(null);
+    setSkips({ 1: false, 2: false });
+    wsService.disconnect();
+  };
+
+  if (!isMultiplayer) {
+    return <MainMenu onGameStart={handleGameStart} />;
+  }
+
+  // Handle Turn Skipping Logic (only for local/single-player mode)
+  useEffect(() => {
+    if (isMultiplayer || winner) return;
 
     // 1. Check Exhaustion (Prioritized)
     if (skips[currentPlayer]) {
@@ -37,17 +96,29 @@ const App: React.FC = () => {
       return () => clearTimeout(timer);
     }
 
-  }, [currentPlayer, skips, winner, board]);
+  }, [currentPlayer, skips, winner, board, isMultiplayer]);
 
   // Left Click: Move Hero
   const handleCellClick = (x: number, y: number) => {
     if (winner || !heroPos || skips[currentPlayer]) return;
+    if (isMultiplayer && currentPlayer !== playerNumber) return;
 
     const targetPos = { x, y };
     
     // Attempt to Move
     if (isValidMove(board, heroPos, targetPos, currentPlayer)) {
-      executeMove(targetPos);
+      if (isMultiplayer) {
+        wsService.send({
+          type: 'GAME_ACTION',
+          action: {
+            type: 'MOVE',
+            from: heroPos,
+            to: targetPos,
+          },
+        });
+      } else {
+        executeMove(targetPos);
+      }
     }
   };
 
@@ -55,18 +126,39 @@ const App: React.FC = () => {
   const handleCellContext = (e: React.MouseEvent, x: number, y: number) => {
     e.preventDefault(); // Prevent default browser context menu
     if (winner || !heroPos || skips[currentPlayer]) return;
+    if (isMultiplayer && currentPlayer !== playerNumber) return;
 
     const targetPos = { x, y };
 
     // Attempt to Build
     if (isValidBuild(board, heroPos, targetPos)) {
-      executeBuild(targetPos);
+      if (isMultiplayer) {
+        wsService.send({
+          type: 'GAME_ACTION',
+          action: {
+            type: 'BUILD',
+            position: targetPos,
+          },
+        });
+      } else {
+        executeBuild(targetPos);
+      }
       return;
     }
 
     // Attempt to Destroy
     if (isValidDestroy(board, heroPos, targetPos, currentPlayer)) {
-      executeDestroy(targetPos);
+      if (isMultiplayer) {
+        wsService.send({
+          type: 'GAME_ACTION',
+          action: {
+            type: 'DESTROY',
+            position: targetPos,
+          },
+        });
+      } else {
+        executeDestroy(targetPos);
+      }
       return;
     }
   };
@@ -163,17 +255,24 @@ const App: React.FC = () => {
           <div className="flex items-center justify-between w-full max-w-md bg-white p-4 rounded-xl shadow-sm border border-slate-200">
             <div className={`flex items-center gap-2 ${currentPlayer === 1 ? 'font-bold text-red-600' : 'text-slate-400'}`}>
               <div className="w-3 h-3 rounded-full bg-red-500"></div> Player 1
+              {isMultiplayer && playerNumber === 1 && <span className="text-xs text-slate-500">(You)</span>}
             </div>
             <div className="font-mono text-slate-500 text-sm bg-slate-100 px-3 py-1 rounded-full">
               Turn {turnCount}
             </div>
             <div className={`flex items-center gap-2 ${currentPlayer === 2 ? 'font-bold text-blue-600' : 'text-slate-400'}`}>
+              {isMultiplayer && playerNumber === 2 && <span className="text-xs text-slate-500">(You)</span>}
               Player 2 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
             </div>
           </div>
+          {isMultiplayer && currentPlayer !== playerNumber && (
+            <div className="text-center text-slate-600 text-sm font-medium bg-yellow-50 px-4 py-2 rounded-lg border border-yellow-200">
+              Waiting for opponent's turn...
+            </div>
+          )}
 
           {/* Grid */}
-          <div className={`bg-white p-2 rounded-lg shadow-xl border-4 border-slate-200 transition-opacity duration-300 ${skips[currentPlayer] ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={`bg-white p-2 rounded-lg shadow-xl border-4 border-slate-200 transition-opacity duration-300 ${skips[currentPlayer] || (isMultiplayer && currentPlayer !== playerNumber) ? 'opacity-50 pointer-events-none' : ''}`}>
             <div 
               className="grid gap-0.5 bg-slate-300" 
               style={{ 
@@ -231,11 +330,11 @@ const App: React.FC = () => {
                   Great strategy! The enemy hero has been captured.
                 </p>
                 <button 
-                  onClick={resetGame}
+                  onClick={isMultiplayer ? handleReturnToMenu : resetGame}
                   className="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold shadow-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <RefreshCw className="w-5 h-5" />
-                  Play Again
+                  {isMultiplayer ? 'Return to Menu' : 'Play Again'}
                 </button>
               </div>
             </div>
@@ -268,12 +367,20 @@ const App: React.FC = () => {
             </div>
 
             {/* Debug Reset (if no winner yet) */}
-            {!winner && (
+            {!winner && !isMultiplayer && (
               <button 
                 onClick={resetGame}
                 className="mt-auto flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-sm transition-colors font-medium"
               >
                 <RefreshCw className="w-4 h-4" /> Reset Game
+              </button>
+            )}
+            {isMultiplayer && (
+              <button 
+                onClick={handleReturnToMenu}
+                className="mt-auto flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-sm transition-colors font-medium"
+              >
+                <RefreshCw className="w-4 h-4" /> Leave Game
               </button>
             )}
         </div>
