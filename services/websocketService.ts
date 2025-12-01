@@ -20,10 +20,38 @@ export class WebSocketService {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
 
-  connect(url: string = 'ws://localhost:3001'): Promise<void> {
+  private getWebSocketUrl(): string {
+    // Check for environment variable first (useful for deployments where frontend/backend are separate)
+    if (typeof window !== 'undefined' && (window as any).__WS_URL__) {
+      return (window as any).__WS_URL__;
+    }
+
+    // In production, use the same hostname with wss:// protocol
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      
+      // If localhost, use default local port
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'ws://localhost:3001';
+      }
+      
+      // In production, use the same hostname and port (or default to 443 for wss)
+      const port = window.location.port ? `:${window.location.port}` : '';
+      const wsUrl = `${protocol}//${hostname}${port}`;
+      console.log(`Connecting to WebSocket at: ${wsUrl}`);
+      return wsUrl;
+    }
+    
+    // Fallback for SSR or non-browser environments
+    return 'ws://localhost:3001';
+  }
+
+  connect(url?: string): Promise<void> {
+    const wsUrl = url || this.getWebSocketUrl();
     return new Promise((resolve, reject) => {
       try {
-        this.ws = new WebSocket(url);
+        this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
           console.log('WebSocket connected');
@@ -48,7 +76,7 @@ export class WebSocketService {
         this.ws.onclose = () => {
           console.log('WebSocket disconnected');
           this.ws = null;
-          this.attemptReconnect(url);
+          this.attemptReconnect(wsUrl);
         };
       } catch (error) {
         reject(error);
