@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BoardState, Player, Position } from './types';
 import { createInitialBoard, getHeroPosition, isValidMove, isValidBuild, isValidDestroy, hasValidActions, BOARD_SIZE } from './utils/gameLogic';
 import { BoardCell } from './components/BoardCell';
@@ -15,6 +15,12 @@ const App: React.FC = () => {
   const [turnCount, setTurnCount] = useState<number>(1);
   const [winner, setWinner] = useState<Player | null>(null);
   const [skips, setSkips] = useState<{1: boolean, 2: boolean}>({1: false, 2: false});
+  const skipsRef = useRef<{1: boolean, 2: boolean}>({1: false, 2: false});
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    skipsRef.current = skips;
+  }, [skips]);
 
   // Derived state
   const heroPos = getHeroPosition(board, currentPlayer);
@@ -221,8 +227,24 @@ const App: React.FC = () => {
   }
 
   const endTurn = () => {
-    setCurrentPlayer(prev => prev === 1 ? 2 : 1);
+    // Switch to next player
+    const nextPlayer = currentPlayer === 1 ? 2 : 1;
+    setCurrentPlayer(nextPlayer);
     setTurnCount(prev => prev + 1);
+    
+    // Check if the next player should be skipped (matching server behavior)
+    // Use setTimeout to allow state to settle, then check skip flag
+    setTimeout(() => {
+      // Check the current skip state via ref to avoid stale closure
+      if (skipsRef.current[nextPlayer]) {
+        // Clear the skip flag and skip their turn by calling endTurn again
+        setSkips(prev => ({ ...prev, [nextPlayer]: false }));
+        // Recursively skip to the next player
+        const nextNextPlayer = nextPlayer === 1 ? 2 : 1;
+        setCurrentPlayer(nextNextPlayer);
+        setTurnCount(prev => prev + 1);
+      }
+    }, 100);
   };
 
   const resetGame = () => {
